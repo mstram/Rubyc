@@ -27,6 +27,7 @@ You can edit the script file and reload the changes by using /rcreset on the rub
 For example, to make a rubyc using the not.rb script, type these lines into the chip sign:
 
 1 `rubyc`
+
 2 `not`
 
 This script requires at least 1 input/output pair.
