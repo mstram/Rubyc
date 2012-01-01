@@ -3,8 +3,9 @@ java_import 'org.tal.rubychip.RubyCircuit'
 
 class Not < RubyCircuit
    def init
-      info "rubyc not"
-      true
+     setStateless true
+     info "rubyc not"
+     true
    end
 
    def input(idx, state)
