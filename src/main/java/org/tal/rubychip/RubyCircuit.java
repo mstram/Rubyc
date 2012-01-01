@@ -48,6 +48,10 @@ public abstract class RubyCircuit {
         if (currentSender!=null) parent.prgError(currentSender, msg);
     }
     
+    public void setStateless(boolean stateless) {
+        parent.prgStateless(stateless);
+    }
+    
     protected int bits_to_i(int startIdx, int length, boolean[] bits) {
         int val = 0;
         for (int i=0; i<length; i++) {
@@ -58,5 +62,4 @@ public abstract class RubyCircuit {
     }
     
     public String getScript() { return script; }
-    
 }

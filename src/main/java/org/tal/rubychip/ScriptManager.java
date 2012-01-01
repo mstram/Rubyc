@@ -13,12 +13,8 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.regex.Pattern;
-import org.jruby.RubyInstanceConfig.CompileMode;
-import org.jruby.embed.LocalContextScope;
-import org.jruby.embed.ScriptingContainer;
 
 /**
  *
@@ -26,16 +22,8 @@ import org.jruby.embed.ScriptingContainer;
  */
 public class ScriptManager {
     private static final String defaultScript = "/default.rb";
-    private ScriptingContainer runtime;
     
     public final static Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
-    
-    public ScriptManager(String[] scriptPath) {
-        runtime = new ScriptingContainer(LocalContextScope.THREADSAFE);
-        runtime.setCompileMode(CompileMode.JIT);
-        runtime.setLoadPaths(Arrays.asList(scriptPath));
-        runtime.setClassLoader(rubyc.class.getClassLoader());        
-    }
     
     RubyCircuit getInstance(rubyc rbc, String name) throws IOException, IllegalArgumentException {        
         String script;
@@ -48,17 +36,15 @@ public class ScriptManager {
             } else throw new IllegalArgumentException("Invalid script name: " + name);
         } 
                             
-        RubyCircuit c = newInstance(rbc, runtime, script);
+        RubyCircuit c = newInstance(rbc, script);
         if (c!=null) c.script = script;
         return c;
     }
 
-    private RubyCircuit newInstance(rubyc c, ScriptingContainer runtime, String script) {
-        
-        Object receiver = runtime.runScriptlet(script);
-        if (receiver instanceof RubyCircuit) return (RubyCircuit)receiver;
-        else return null;
-        
+    private RubyCircuit newInstance(rubyc c, String script) {
+        Object receiver = c.getRuntime().runScriptlet(script);
+        if (receiver==null || !(receiver instanceof RubyCircuit)) return null;
+        else return (RubyCircuit)receiver;        
     }
     
     public String defaultScript(String name) throws IOException {
@@ -78,7 +64,7 @@ public class ScriptManager {
             scanner.close();
         }  
         String script = scriptBuilder.toString();
-        script = script.replaceAll("CLASS123597132467298", name.substring(0,1).toUpperCase() + name.substring(1));
+        script = script.replaceAll("CLASS123597132467298", getClassName(name));
         return script;
     }
     
@@ -93,6 +79,10 @@ public class ScriptManager {
         return new File(RubycLibrary.folder, name + ".rb");
     }
 
+    public static String getClassName(String name) {
+        return name.substring(0,1).toUpperCase() + name.substring(1);
+    }
+    
     private String readFile(File f) throws IOException {
         if (!f.exists()) throw new FileNotFoundException();
 

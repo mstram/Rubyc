@@ -24,7 +24,7 @@ public class RubycLibrary extends CircuitLibrary {
     public static ScriptManager scriptManager;
     
     public static File folder;
-        
+
     protected RubycCommand command;
     
     protected static File jrubyJar;
@@ -106,7 +106,7 @@ public class RubycLibrary extends CircuitLibrary {
             addURL.invoke(syscl, new Object[]{ jrubyURL });
             
             log(Level.INFO, "Loading JRuby runtime " + jrubyFile.getPath() + "...");
-            scriptManager = new ScriptManager(new String[] {folder.getAbsolutePath()});
+            scriptManager = new ScriptManager();
             return true;            
         } catch (Exception e) {
             log(Level.SEVERE, e.getMessage() + " while adding JRuby.jar to the classpath");
