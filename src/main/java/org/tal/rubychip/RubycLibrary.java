@@ -5,18 +5,19 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.CircuitLibrary;
+import org.tal.rubychip.command.RubycCommand;
 
 /**
  *
  * @author Tal Eisenberg
  */
 public class RubycLibrary extends CircuitLibrary {
-    private static final Logger logger = Logger.getLogger("Minecraft");
     public static File folder;
        
+    protected RubycCommand command;
+    
     protected static File jrubyJar;
     
     @Override
@@ -42,7 +43,9 @@ public class RubycLibrary extends CircuitLibrary {
     
     @Override
     public void onEnable() {
-        if (jrubyJar==null) disable();
+        if (jrubyJar==null) { disable(); return; }
+        
+        registerCommand();
     }
 
     @Override
@@ -54,6 +57,11 @@ public class RubycLibrary extends CircuitLibrary {
     private void disable() {
         getServer().getPluginManager().disablePlugin(this);
     }    
+    
+    private void registerCommand() {
+        command = new RubycCommand();
+        getCommand("rubyc").setExecutor(command);
+    }
     
     private boolean registerJRubyJar(File jrubyFile) {
         try {

@@ -2,3 +2,9 @@ name: Rubyc
 main: org.tal.rubychip.RubycLibrary
 version: 0.1
 depend: [RedstoneChips]
+commands:
+  rubyc:
+    description: View and edit the chip script.
+    usage: |
+      `rubyc`
+    aliases: [rb]

@@ -100,7 +100,7 @@ public class rubyc extends Circuit {
         return stateless;
     }
 
-    void prgOut(int idx, boolean state) {
+    void prgSendBoolean(int idx, boolean state) {
         sendOutput(idx, state);
     }
 
@@ -116,6 +116,10 @@ public class rubyc extends Circuit {
         if (hasDebuggers()) debug(msg);
     }
 
+    void prgSendInt(int startIdx, int length, int val) {
+        sendInt(startIdx, length, val);
+    }
+    
     void copyInputBits(RubyCircuit program) {
         for (int i=0; i<program.inputs.length; i++)
             program.inputs[i] = inputBits.get(i);
@@ -124,10 +128,6 @@ public class rubyc extends Circuit {
     void copyOutputBits(RubyCircuit program) {
         for (int i=0; i<program.outputs.length; i++)
             program.outputs[i] = outputBits.get(i);        
-    }
-
-    void prgOutint(int startIdx, int length, int val) {
-        sendInt(startIdx, length, val);
     }
 }
 

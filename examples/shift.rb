@@ -17,7 +17,7 @@ class Shift < RubyCircuit
 
   def input(idx, state)
     if idx==0 && state
-       out 0, inputs[@count+1]
+       send 0, inputs[@count+1]
        count
     end
   end

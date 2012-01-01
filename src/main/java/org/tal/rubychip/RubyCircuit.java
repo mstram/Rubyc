@@ -27,14 +27,14 @@ public abstract class RubyCircuit {
     
     public abstract void input(int idx, boolean state);
     
-    protected void out(int idx, boolean state) {
-        parent.prgOut(idx, state);
+    protected void send(int idx, boolean state) {
+        parent.prgSendBoolean(idx, state);
         
         outputs[idx] = state;
     }
     
-    protected void outint(int startIdx, int length, int val) {
-        parent.prgOutint(startIdx, length, val);
+    protected void send(int startIdx, int length, int val) {
+        parent.prgSendInt(startIdx, length, val);
     }
     
     protected void info(String msg) {

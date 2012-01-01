@@ -8,8 +8,7 @@ class Not < RubyCircuit
    end
 
    def input(idx, state)
-      debug idx.to_s() + ": " + state.to_s()
-      out idx, !state
+      send idx, !state
    end
 end
 

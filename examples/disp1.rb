@@ -67,11 +67,11 @@ class Disp1 < RubyCircuit
   
   # set color of a pixel.
   def paint(x, y, color)
-    outint 1, 3, x
-    outint 4, 3, y
-    outint 7, 4, color
-    out 0, true
-    out 0, false
+    send 1, 3, x
+    send 4, 3, y
+    send 7, 4, color
+    send 0, true
+    send 0, false
   end
   
   def stepy
