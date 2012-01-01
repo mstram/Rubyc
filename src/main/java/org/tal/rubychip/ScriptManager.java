@@ -15,7 +15,9 @@ import java.io.Writer;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 import org.jruby.RubyInstanceConfig.CompileMode;
+import org.jruby.embed.LocalContextScope;
 import org.jruby.embed.ScriptingContainer;
 
 /**
@@ -24,14 +26,26 @@ import org.jruby.embed.ScriptingContainer;
  */
 public class ScriptManager {
     private static final String defaultScript = "/default.rb";
+    private ScriptingContainer runtime;
     
-    RubyCircuit getInstance(rubyc rbc, ScriptingContainer runtime, String name) throws IOException {        
+    public final static Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
+    
+    public ScriptManager(String[] scriptPath) {
+        runtime = new ScriptingContainer(LocalContextScope.THREADSAFE);
+        runtime.setCompileMode(CompileMode.JIT);
+        runtime.setLoadPaths(Arrays.asList(scriptPath));
+        runtime.setClassLoader(rubyc.class.getClassLoader());        
+    }
+    
+    RubyCircuit getInstance(rubyc rbc, String name) throws IOException, IllegalArgumentException {        
         String script;
         try {
             script = load(name);                        
         } catch (FileNotFoundException f) {
-            script = defaultScript(name);
-            save(name, script);
+            if (validateName(name)) {
+                script = defaultScript(name);
+                save(name, script);
+            } else throw new IllegalArgumentException("Invalid script name: " + name);
         } 
                             
         RubyCircuit c = newInstance(rbc, runtime, script);
@@ -40,9 +54,6 @@ public class ScriptManager {
     }
 
     private RubyCircuit newInstance(rubyc c, ScriptingContainer runtime, String script) {
-        runtime.setCompileMode(CompileMode.JIT);
-        runtime.setLoadPaths(Arrays.asList(new String[] { c.getPlugin().getDataFolder().getAbsolutePath() }));
-        runtime.setClassLoader(rubyc.class.getClassLoader());
         
         Object receiver = runtime.runScriptlet(script);
         if (receiver instanceof RubyCircuit) return (RubyCircuit)receiver;
@@ -107,5 +118,9 @@ public class ScriptManager {
         } finally {
             out.close();
         }
+    }
+
+    private boolean validateName(String name) {
+        return NAME_PATTERN.matcher(name).matches();
     }
 }

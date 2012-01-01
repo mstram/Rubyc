@@ -10,8 +10,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.jruby.embed.EvalFailedException;
 import org.jruby.embed.InvokeFailedException;
-import org.jruby.embed.LocalContextScope;
-import org.jruby.embed.ScriptingContainer;
 import org.jruby.exceptions.RaiseException;
 import org.tal.redstonechips.circuit.Circuit;
 
@@ -19,31 +17,24 @@ import org.tal.redstonechips.circuit.Circuit;
  *
  * @author Tal Eisenberg
  */
-public class rubyc extends Circuit {
-    public static ScriptManager scriptManager = new ScriptManager();
-    
+public class rubyc extends Circuit {    
     public final static String initMethod = "init";
     public final static String inputMethod = "input";
     
     private boolean stateless = false;
-    private ScriptingContainer runtime;
     private RubyCircuit program;
     
     @Override
     public void inputChange(int index, boolean state) {
-        if (runtime!=null) {
-            try {
-                program.inputs[index] = state;
-                program.input(index, state);
-                //runtime.callMethod(receiver, inputMethod, new Object[] {index, state});
-            } catch (InvokeFailedException e) {
-                debug("on input: " + e.getMessage());
-            } catch (EvalFailedException e) {
-                debug("on input: " + e.getMessage());
-            } catch (RaiseException e) {
-                debug("on input: " + e.getMessage());
-            }
-        }
+        try {
+            program.inputs[index] = state;
+            program.input(index, state);
+            //runtime.callMethod(receiver, inputMethod, new Object[] {index, state});
+        } catch (InvokeFailedException e) {
+            debug("on input: " + e.getMessage());
+        } catch (RuntimeException e) {
+            debug("on input: " + e.getMessage());
+        } 
     }
 
     @Override
@@ -52,15 +43,20 @@ public class rubyc extends Circuit {
             error(sender, "Missing script name argument.");
             return false;
         }
-                        
-        runtime = new ScriptingContainer(LocalContextScope.SINGLETON);
+                               
         try {
-            program = scriptManager.getInstance(this, runtime, args[0]);
+            program = RubycLibrary.scriptManager.getInstance(this, args[0]);
+        } catch (IllegalArgumentException e) {
+            error(sender, e.getMessage());
+            return false;
         } catch (IOException ex) {
             error(sender, "on init: " + ex.getMessage());
-        } catch (RaiseException e) {
+            return false;
+        } catch (RuntimeException e) {
             error(sender, "on init: " + e.getMessage());
-        }
+            e.printStackTrace();
+            return false;
+        } 
         
         try {
             boolean res;

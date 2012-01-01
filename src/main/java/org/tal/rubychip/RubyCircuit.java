@@ -1,7 +1,6 @@
 package org.tal.rubychip;
 
 import org.bukkit.command.CommandSender;
-import org.tal.redstonechips.util.BitSetUtils;
 
 /**
  *
