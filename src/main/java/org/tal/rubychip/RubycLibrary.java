@@ -1,9 +1,14 @@
 package org.tal.rubychip;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.logging.Level;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.CircuitLibrary;
@@ -14,8 +19,10 @@ import org.tal.rubychip.command.RubycCommand;
  * @author Tal Eisenberg
  */
 public class RubycLibrary extends CircuitLibrary {
+    public static final String jrubyAddress = "http://repo1.maven.org/maven2/org/jruby/jruby/1.6.5/jruby-1.6.5.jar";
+    
     public static File folder;
-       
+        
     protected RubycCommand command;
     
     protected static File jrubyJar;
@@ -36,16 +43,19 @@ public class RubycLibrary extends CircuitLibrary {
         jrubyJar = new File(getDataFolder() + File.separator + "jruby.jar");
         
         if (!registerJRubyJar(jrubyJar)) {
-            jrubyJar = null;
-            return;
+            getServer().getScheduler().scheduleAsyncDelayedTask(this, new JRubyDownloader());
         }        
     }
     
     @Override
     public void onEnable() {
-        if (jrubyJar==null) { disable(); return; }
-        
-        registerCommand();
+        if (jrubyJar==null || !jrubyJar.exists()) { 
+            log(Level.SEVERE, "Can't find jruby.jar in plugin folder.");
+            disable(); 
+        } else {
+            log(Level.INFO, getDescription().getName() + " " + getDescription().getVersion() + " enabled.");
+            registerCommand();
+        }
     }
 
     @Override
@@ -58,6 +68,11 @@ public class RubycLibrary extends CircuitLibrary {
         getServer().getPluginManager().disablePlugin(this);
     }    
     
+    private void enable() {
+        getServer().getPluginManager().enablePlugin(this);
+    }    
+
+    
     private void registerCommand() {
         command = new RubycCommand();
         getCommand("rubyc").setExecutor(command);
@@ -67,7 +82,7 @@ public class RubycLibrary extends CircuitLibrary {
         try {
             // sanity checks
             if (!jrubyFile.exists()) {
-                logger.log(Level.SEVERE, "JRuby runtime not found: " + jrubyFile.getPath());
+                log(Level.SEVERE, getPrefix() + "JRuby runtime not found: " + jrubyFile.getPath());
                 return false;
             }              
             
@@ -98,6 +113,42 @@ public class RubycLibrary extends CircuitLibrary {
     }
     
     public void log(Level l, String m) {
-        logger.log(l, "[" + this.getName() + "] " + m);
+        logger.log(l, getPrefix() + m);
+    }
+
+    private String getPrefix() {
+        return "[" + getDescription().getName() + "] ";
+    }
+    
+    class JRubyDownloader implements Runnable {
+
+        @Override
+        public void run() {
+            URL url = null;
+            log(Level.INFO, "Downloading jruby 1.6.5...");
+            
+            try {
+                url = new URL(jrubyAddress);
+            } catch (MalformedURLException ex) {
+                log(Level.SEVERE, ex.getMessage());
+                return;
+            }
+
+            try {
+                ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+                File f = new File(getDataFolder(), "jruby.jar");
+                FileOutputStream fos = new FileOutputStream(f);
+                fos.getChannel().transferFrom(rbc, 0, 1 << 24);
+                
+                log(Level.INFO, "Finished downloading jruby. Enabling rubyc.");
+                if (isEnabled()) disable();
+                
+                if (registerJRubyJar(jrubyJar)) 
+                    enable();
+            } catch (IOException ex) {
+                log(Level.SEVERE, "While downloading jruby.jar, " + ex);
+            }
+        }
+        
     }
 }
