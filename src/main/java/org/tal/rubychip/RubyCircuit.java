@@ -1,6 +1,8 @@
 package org.tal.rubychip;
 
 import org.bukkit.command.CommandSender;
+import org.tal.redstonechips.RedstoneChips;
+import org.tal.redstonechips.circuit.InterfaceBlock;
 
 /**
  *
@@ -13,11 +15,12 @@ public abstract class RubyCircuit {
     public String[] args = new String[0];
     public boolean[] inputs;
     public boolean[] outputs;
+    public RedstoneChips rc;
     
     public void setParent(rubyc parent) { 
         inputs = new boolean[parent.inputs.length];
         outputs = new boolean[parent.outputs.length];
-        
+        rc = parent.getPlugin();
         this.parent = parent; 
     }
             
@@ -62,4 +65,12 @@ public abstract class RubyCircuit {
     }
     
     public String getScript() { return script; }
+    
+    public rubyc getRubyc() { return parent; }
+    
+    public String[] getArgs() { return args; }
+    
+    public InterfaceBlock[] getInterfaces() { return parent.interfaceBlocks; }
+    
+    public boolean has_debuggers() { return parent.hasDebuggers(); }
 }
