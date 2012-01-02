@@ -1,0 +1,16 @@
+#!/bin/bash
+
+mvn clean package install
+
+mkdir zipfolder
+cd zipfolder
+cp ../target/*.jar .
+cp ../LICENSE .
+cp ../README.md .
+mkdir Rubyc
+cp -r ../scripts/* Rubyc/
+
+zip -r ../target/rubyc-build$1.zip *
+
+cd ..
+rm -rf zipfolder
