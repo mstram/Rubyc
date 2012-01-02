@@ -18,6 +18,10 @@ import org.tal.rubychip.RubycLibrary;
 import org.tal.rubychip.RubycScript;
 import org.tal.rubychip.ScriptManager;
 import org.tal.rubychip.rubyc;
+import org.tal.rubychip.script.AddCommand;
+import org.tal.rubychip.script.DeleteCommand;
+import org.tal.rubychip.script.InsertCommand;
+import org.tal.rubychip.script.ReplaceCommand;
 
 /**
  *
@@ -49,32 +53,57 @@ public class RubycCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean chipCommands(CommandSender sender, String[] args, rubyc r) {
+    private boolean chipCommands(CommandSender sender, String[] args, rubyc chip) {
         if (args.length==0) {
-            editHelp(sender, r);
+            editHelp(sender, chip);
             return true;
         } else {
             if ("print".startsWith(args[0])) {
-                printLines(sender, args, r.getRubyCircuit());
+                printLines(sender, args, chip.getRubyCircuit());
                 return true;
-            } else if ("replace".startsWith(args[0])) {
-                return replaceLines(sender, args, r);
-            } else if ("delete".startsWith(args[0])) {
-                return deleteLines(sender, args, r);
-            } else if ("insert".startsWith(args[0])) {
-                return insertLines(sender, args, r);
-            } else if ("add".startsWith(args[0])) {
-                return addLines(sender, args, r);
-            } else if (args[0].equals("save")) {
-                save(sender, r.getRubyCircuit());
-                return true;
-            } else if (args[0].equals("undo")) {
-                sender.sendMessage("not implemented yet.");
-                return true;
-            } else if (args[0].equals("redo")) {
-                sender.sendMessage("not implemented yet.");
-                return true;
-            } else return false;
+            } else {
+                boolean res;
+                boolean automaticReload = true;
+                
+                if ("replace".startsWith(args[0])) {
+                    res = replaceLines(sender, args, chip);
+                } else if ("delete".startsWith(args[0])) {
+                    res = deleteLines(sender, args, chip);
+                } else if ("insert".startsWith(args[0])) {
+                    res = insertLines(sender, args, chip);
+                } else if ("add".startsWith(args[0])) {
+                    res = addLines(sender, args, chip);
+                } else if (args[0].equals("save")) {
+                    save(sender, chip.getRubyCircuit());
+                    res = true;
+                } else if ("undo".startsWith(args[0])) {
+                    RubycScript s = chip.getRubyCircuit().getScript();
+                    if (s.hasUndo()) {
+                        sender.sendMessage(ChatColor.GRAY + "Undo " + s.getUndoStack().peek().getName() + ".");
+                        s.undoEditCommand();
+                        res = true;
+                    } else {
+                        sender.sendMessage(rc.getPrefs().getInfoColor() + "Nothing to undo.");
+                        return true;
+                    }
+                    
+                } else if ("redo".startsWith(args[0])) {
+                    RubycScript s = chip.getRubyCircuit().getScript();
+                    if (s.hasRedo()) {
+                        sender.sendMessage(ChatColor.GRAY + "Redo " + s.getRedoStack().peek().getName() + ".");
+                        s.redoEditCommand();
+                        res = true;
+                    } else {
+                        sender.sendMessage(rc.getPrefs().getInfoColor() + "Nothing to redo.");
+                        return true;
+                    }
+                    
+                } else res = false;
+                
+                if (res && automaticReload) chip.reloadScript(sender);
+                
+                return res;
+            } 
         } 
     }
     
@@ -110,7 +139,7 @@ public class RubycCommand implements CommandExecutor {
         ChatColor extraColor = ChatColor.YELLOW;        
         ChatColor infoColor = rc.getPrefs().getInfoColor();
         
-        String scriptPath = ScriptManager.getScriptFilename(r.getRubyCircuit().getScriptName()).getName();
+        String scriptPath = RubycScript.getScriptFile(r.getRubyCircuit().getScriptName()).getName();
         String help = "";
         String title = extraColor + r.getChipString() + infoColor + " running " + extraColor + scriptPath + "\n";
         help += infoColor + "Script editing commands:" + "\n";
@@ -135,7 +164,7 @@ public class RubycCommand implements CommandExecutor {
     }
     
     private void listScripts(CommandSender sender) {
-        List<String> list = RubycLibrary.scriptManager.getAvailableScripts(RubycLibrary.scriptManager.createRuntime());
+        List<String> list = ScriptManager.getAvailableScripts(ScriptManager.createRuntime());
         if (list.isEmpty()) {
             sender.sendMessage(rc.getPrefs().getInfoColor() + "There are no scripts yet.");
         } else {
@@ -168,17 +197,15 @@ public class RubycCommand implements CommandExecutor {
         int[] range = rangeToLines(sender, args[1]);
         String[] lines = parseLines(sender, args, 2);
         
-        if (lines!=null && range!=null) {
-            try {
-                chip.getRubyCircuit().getScript().replaceLines(lines, range[0], range[1]);
-            } catch (IllegalArgumentException e) { 
-                sender.sendMessage(rc.getPrefs().getErrorColor() + e.getMessage());
-            }
-
-            chip.reloadScript(sender);
-        }
+        if (lines==null || range==null) return false;
         
-        return true;
+        try {
+            chip.getRubyCircuit().getScript().runEditCommand(new ReplaceCommand(lines, range[0], range[1]));
+        } catch (IllegalArgumentException e) { 
+            sender.sendMessage(rc.getPrefs().getErrorColor() + e.getMessage());
+        }
+
+        return true;        
     }
     
     private boolean deleteLines(CommandSender sender, String[] args, rubyc chip) {
@@ -186,16 +213,14 @@ public class RubycCommand implements CommandExecutor {
         
         int[] range = rangeToLines(sender, args[1]);
 
-        if (range!=null) {
-            try {
-                chip.getRubyCircuit().getScript().deleteLines(range[0], range[1]);
-            } catch (IllegalArgumentException e) { 
-                sender.sendMessage(rc.getPrefs().getErrorColor() + e.getMessage());
-            }
-            
-            chip.reloadScript(sender);
+        if (range==null) return false;
+
+        try {
+            chip.getRubyCircuit().getScript().runEditCommand(new DeleteCommand(range[0], range[1]));
+        } catch (IllegalArgumentException e) { 
+            sender.sendMessage(rc.getPrefs().getErrorColor() + e.getMessage());
         }
-        
+
         return true;
     }
 
@@ -203,19 +228,17 @@ public class RubycCommand implements CommandExecutor {
         if (args.length<3) return false;
         if (!ParsingUtils.isInt(args[1])) return false;
 
-        int afterLine = Integer.parseInt(args[1]);
+        int beforeLine = Integer.parseInt(args[1]);
 
-        String[] lines = parseLines(sender, args, 2);
-        if (lines==null) return true;
+        String[] insert = parseLines(sender, args, 2);
+        if (insert==null) return true;
 
         try {
-            chip.getRubyCircuit().getScript().insertLines(afterLine, lines);
+            chip.getRubyCircuit().getScript().runEditCommand(new InsertCommand(beforeLine, insert));
         } catch (IllegalArgumentException e) { 
             sender.sendMessage(rc.getPrefs().getErrorColor() + e.getMessage());
         }
 
-        chip.reloadScript(sender);
-        
         return true;        
     }
 
@@ -225,16 +248,15 @@ public class RubycCommand implements CommandExecutor {
         String[] lines = parseLines(sender, args, 1);
         if (lines==null) return true;
         
-        chip.getRubyCircuit().getScript().addLines(lines);
-        chip.reloadScript(sender);
+        chip.getRubyCircuit().getScript().runEditCommand(new AddCommand(lines));
         
         return true;
     }
     
     private void save(CommandSender sender, RubyCircuit c) {
         try {
-            RubycLibrary.scriptManager.save(c.getScriptName(), c.getScript().getScript());
-            sender.sendMessage(rc.getPrefs().getInfoColor() + "Saved script to: " + ScriptManager.getScriptFilename(c.getScriptName()));
+            c.getScript().save();
+            sender.sendMessage(rc.getPrefs().getInfoColor() + "Saved script to: " + c.getScript().getFile());
         } catch (IOException e) {
             sender.sendMessage(rc.getPrefs().getErrorColor() + e.toString());
         } catch (RuntimeException e) {

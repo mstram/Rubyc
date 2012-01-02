@@ -47,7 +47,7 @@ public class rubyc extends Circuit {
         RubycScript script;
         
         try {
-            script = RubycLibrary.scriptManager.getScript(args[0]);
+            script = ScriptManager.getScript(args[0]);
         } catch (IllegalArgumentException e) {
             error(sender, e.getMessage());
             return false;
@@ -56,10 +56,10 @@ public class rubyc extends Circuit {
             return false;
         } 
         
-        runtime = RubycLibrary.scriptManager.createRuntime();
+        runtime = ScriptManager.createRuntime();
         
         if (initScript(sender, script)) {
-            info(sender, "Successfully activated ruby circuit: " + ChatColor.YELLOW + ScriptManager.getScriptFilename(args[0]));
+            info(sender, "Successfully activated ruby circuit: " + ChatColor.YELLOW + script.getFile());
             return true;
         } else return false;
     }
@@ -104,7 +104,7 @@ public class rubyc extends Circuit {
         runtime.clear();
         
         if (initScript(sender, program.getScript()))
-            info(sender, "Reloaded script: " + ChatColor.YELLOW + ScriptManager.getScriptFilename(args[0]));
+            info(sender, "Reloaded script: " + ChatColor.YELLOW + program.getScript().getFile());
         else info(sender, "Can't reload script.");
     }
     

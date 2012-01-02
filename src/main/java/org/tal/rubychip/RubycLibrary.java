@@ -21,8 +21,6 @@ import org.tal.rubychip.command.RubycCommand;
 public class RubycLibrary extends CircuitLibrary {
     public static final String jrubyAddress = "http://repo1.maven.org/maven2/org/jruby/jruby/1.6.5/jruby-1.6.5.jar";
     
-    public static ScriptManager scriptManager;
-    
     public static File folder;
     protected static File jrubyJar;
     
@@ -100,7 +98,6 @@ public class RubycLibrary extends CircuitLibrary {
             addURL.invoke(syscl, new Object[]{ jrubyURL });
             
             log(Level.INFO, "Loading JRuby runtime " + jrubyFile.getPath() + "...");
-            scriptManager = new ScriptManager();
             jrubyLoaded = true;
             return true;            
         } catch (Exception e) {

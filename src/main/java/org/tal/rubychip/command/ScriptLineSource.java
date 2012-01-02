@@ -7,6 +7,7 @@ package org.tal.rubychip.command;
 import org.bukkit.ChatColor;
 import org.tal.redstonechips.command.LineSource;
 import org.tal.rubychip.RubycScript;
+import org.tal.rubychip.script.Script;
 
 /**
  *
@@ -16,7 +17,7 @@ class ScriptLineSource implements LineSource {
     private String[] script;
     private int firstLine, lastLine;
     
-    public ScriptLineSource(RubycScript script, int firstLine, int lastLine) {
+    public ScriptLineSource(Script script, int firstLine, int lastLine) {
         this.script = script.getLines();
         this.firstLine = firstLine;
 

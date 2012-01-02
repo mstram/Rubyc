@@ -4,73 +4,42 @@
  */
 package org.tal.rubychip;
 
+import org.tal.rubychip.script.Script;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.URL;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 import org.jruby.embed.ScriptingContainer;
 
 /**
  *
  * @author Tal Eisenberg
  */
-public class RubycScript {
-    public static final int LAST_LINE = -1;
+public class RubycScript extends Script {
+    private static final String defaultScript = "/default.rb";
     
-    private String[] lines;
-    
-    public RubycScript(String script) {
-        lines = script.split(System.getProperty("line.separator"));
+    public final static Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
+        
+    public RubycScript(String name, String script) {
+        this.setScript(name, script);
     }   
     
-    public String[] getLines() {
-        return lines;
+    public void save() throws IOException {
+        Writer out = new OutputStreamWriter(new FileOutputStream(getScriptFile(name)));
+        try {
+            out.write(getScript());
+        } finally {
+            out.close();
+        }
     }
-
-    public void deleteLines(int firstLine, int lastLine) throws IllegalArgumentException {
-        if (lastLine==RubycScript.LAST_LINE) lastLine = lines.length-1;
         
-        if (firstLine<0 || firstLine>lines.length-1 || lastLine>=lines.length || lastLine<0 || lastLine<firstLine)
-            throw new IllegalArgumentException("Line range out of bounds: " + firstLine + ".." + lastLine);
-        int lineCount = lastLine - firstLine + 1;
-        String[] newl = new String[lines.length-lineCount];
-        
-        System.arraycopy(this.lines, 0, newl, 0, firstLine);
-        System.arraycopy(this.lines, lastLine+1, newl, firstLine, newl.length-firstLine);
-                
-        lines = newl;
-    }
-
-    public void insertLines(int beforeLine, String[] insert) throws IllegalArgumentException {
-        if (beforeLine>=lines.length) 
-            throw new IllegalArgumentException("Line out of bounds: " + beforeLine);
-        
-        String[] newl = new String[lines.length+insert.length];
-        
-        System.arraycopy(lines, 0, newl, 0, beforeLine);
-        System.arraycopy(insert, 0, newl, beforeLine, insert.length);
-        System.arraycopy(lines, beforeLine, newl, beforeLine+insert.length, newl.length-beforeLine-insert.length);
-        
-        lines = newl;
-    }
-
-    public void addLines(String[] addition) {
-        String[] newl = new String[lines.length+addition.length];
-        System.arraycopy(lines, 0, newl, 0, lines.length);
-        System.arraycopy(addition, 0, newl, lines.length, addition.length);
-    }
-    
-    public void replaceLines(String[] replacement, int firstLine, int lastLine) throws IllegalArgumentException {
-        if (lastLine==RubycScript.LAST_LINE) lastLine = lines.length-1;
-        
-        if (firstLine<0 || firstLine>lines.length-1 || lastLine>=lines.length || lastLine<0 || lastLine<firstLine)
-            throw new IllegalArgumentException("Line range out of bounds: " + firstLine + ".." + lastLine);
-        int lineCount = lastLine-firstLine + 1;
-        String[] newl = new String[lines.length-lineCount + replacement.length];
-        
-        System.arraycopy(this.lines, 0, newl, 0, firstLine);
-        System.arraycopy(replacement, 0, newl, firstLine, replacement.length);
-        System.arraycopy(this.lines, lastLine+1, newl, firstLine+replacement.length, lines.length-lastLine-1);
-                
-        lines = newl;
-    }
-    
     RubyCircuit newInstance(ScriptingContainer runtime) {
         Object receiver = runtime.runScriptlet(getScript());
         if (receiver==null || !(receiver instanceof RubyCircuit)) return null;
@@ -80,15 +49,63 @@ public class RubycScript {
             return (RubyCircuit)receiver;
         }
     }
-
-    public String getScript() {
-        String script = "";
-        
-        for (String s : lines) {
-            script += s + System.getProperty("line.separator");
-        }
-        
-        return script.substring(0, script.length()-1);
+    
+    public File getFile() {
+        return RubycScript.getScriptFile(name);
     }
     
+    public static File getScriptFile(String name) {
+        return new File(RubycLibrary.folder, name + ".rb");
+    }
+    
+    public static boolean isValidScriptName(String name) {
+        return NAME_PATTERN.matcher(name).matches();
+    }       
+
+    public static String classNameFor(String name) {
+        return name.substring(0,1).toUpperCase() + name.substring(1);
+    }
+    
+    public static RubycScript fromFile(String name) throws IOException, IllegalArgumentException {
+        if (!isValidScriptName(name)) throw new IllegalArgumentException("Invalid script name: " + name);
+        
+        File f = getScriptFile(name);
+        
+        if (!f.exists()) throw new FileNotFoundException();
+
+        StringBuilder scriptBuilder = new StringBuilder();
+        String NL = System.getProperty("line.separator");
+        Scanner scanner = new Scanner(new FileInputStream(f));
+        try {
+            while (scanner.hasNextLine()) {
+                scriptBuilder.append(scanner.nextLine());
+                scriptBuilder.append(NL);
+            }
+        } finally {
+            scanner.close();
+        }  
+        
+        return new RubycScript(name, scriptBuilder.toString());
+    }
+    
+    public static RubycScript defaultScript(String name) throws IOException {
+        URL u = name.getClass().getResource(defaultScript);
+        InputStream stream = u.openStream();
+        
+        StringBuilder scriptBuilder = new StringBuilder();
+        String nl = System.getProperty("line.separator");        
+        Scanner scanner = new Scanner(stream);
+        try {
+            while (scanner.hasNextLine()) {
+                scriptBuilder.append(scanner.nextLine());
+                scriptBuilder.append(nl);
+            }
+        } finally {
+            scanner.close();
+        }
+        
+        String script = scriptBuilder.toString();
+        script = script.replaceAll("CLASS123597132467298", classNameFor(name));
+        return new RubycScript(name, script);
+    }
 }
