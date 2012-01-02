@@ -6,12 +6,9 @@
 package org.tal.rubychip;
 
 import java.io.IOException;
-import java.util.Arrays;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.jruby.RubyInstanceConfig.CompileMode;
 import org.jruby.embed.InvokeFailedException;
-import org.jruby.embed.LocalContextScope;
 import org.jruby.embed.ScriptingContainer;
 import org.jruby.exceptions.RaiseException;
 import org.tal.redstonechips.circuit.Circuit;
@@ -21,19 +18,16 @@ import org.tal.redstonechips.circuit.Circuit;
  * @author Tal Eisenberg
  */
 public class rubyc extends Circuit {    
-    public final static String initMethod = "init";
-    public final static String inputMethod = "input";
-    
     private boolean stateless = false;
     private RubyCircuit program;
     private ScriptingContainer runtime;
     
     @Override
     public void inputChange(int index, boolean state) {
+        program.inputs[index] = state;
+        
         try {
-            program.inputs[index] = state;
             program.input(index, state);
-            //runtime.callMethod(receiver, inputMethod, new Object[] {index, state});
         } catch (InvokeFailedException e) {
             debug("on input: " + e.getMessage());
         } catch (RaiseException e) {
@@ -44,55 +38,57 @@ public class rubyc extends Circuit {
     }
 
     @Override
-    protected boolean init(CommandSender sender, String[] args) {
-        runtime = new ScriptingContainer();
-        runtime.setCompileMode(CompileMode.JIT);
-        runtime.setLoadPaths(Arrays.asList(new String[] {RubycLibrary.folder.getAbsolutePath()}));
-        runtime.setClassLoader(rubyc.class.getClassLoader());        
-        
+    protected boolean init(CommandSender sender, String[] args) {        
         if (args.length==0) {
             error(sender, "Missing script name argument.");
             return false;
         }
-                               
+
+        RubycScript script;
+        
         try {
-            program = RubycLibrary.scriptManager.getInstance(this, args[0]);
-            if (program==null) {
-                error(sender, "Class instance not found in " + args[0] + ".rb");
-                return false;
-            }
+            script = RubycLibrary.scriptManager.getScript(args[0]);
         } catch (IllegalArgumentException e) {
             error(sender, e.getMessage());
             return false;
         } catch (IOException ex) {
             error(sender, redstoneChips.getPrefs().getInfoColor() + "on load: " + redstoneChips.getPrefs().getErrorColor() + ex.getMessage());
             return false;
-        } catch (RaiseException ex) {
-            rubyException(sender, "load", ex);
-        } catch (RuntimeException ex) {
-            error(sender, redstoneChips.getPrefs().getInfoColor() + "on load: " + redstoneChips.getPrefs().getErrorColor() + ex.getMessage());
-            return false;
         } 
         
+        runtime = RubycLibrary.scriptManager.createRuntime();
+        
+        if (initScript(sender, script)) {
+            info(sender, "Successfully activated ruby circuit: " + ChatColor.YELLOW + ScriptManager.getScriptFilename(args[0]));
+            return true;
+        } else return false;
+    }
+
+    private boolean initScript(CommandSender sender, RubycScript script) {
         try {
             boolean res;
+            
+            RubyCircuit p = script.newInstance(runtime);
+            if (p==null) {
+                error(sender, "Class instance not found in " + args[0] + ".rb");
+                return false;
+            }                        
 
-            program.setParent(this);
-            copyInputBits(program);
-            copyOutputBits(program);
-            program.currentSender = sender;
+            p.setup(this, args[0]);
+            copyInputBits(p);
+            copyOutputBits(p);
+            p.currentSender = sender;
             
             if (args.length>1) {
-                program.args = new String[args.length-1];
-                System.arraycopy(args, 1, program.args, 0, args.length-1);                
+                p.args = new String[args.length-1];
+                System.arraycopy(args, 1, p.args, 0, args.length-1);                
             }
 
-            res = program.init();
-            program.currentSender = null;
+            res = p.init();
+            p.currentSender = null;            
+            this.program = p;
             
-            if (res) info(sender, "Successfully activated ruby circuit: " + ChatColor.YELLOW + ScriptManager.getScriptFilename(args[0]));
-            return res;
-            
+            return res;            
         } catch (RaiseException e) {
             rubyException(sender, "init", e);
             return false;
@@ -101,9 +97,17 @@ public class rubyc extends Circuit {
             return false;
         } 
         
-        
     }
-
+    
+    public void reloadScript(CommandSender sender) {
+        this.resetOutputs();
+        runtime.clear();
+        
+        if (initScript(sender, program.getScript()))
+            info(sender, "Reloaded script: " + ChatColor.YELLOW + ScriptManager.getScriptFilename(args[0]));
+        else info(sender, "Can't reload script.");
+    }
+    
     @Override
     protected boolean isStateless() {
         return stateless;
@@ -153,8 +157,13 @@ public class rubyc extends Circuit {
         }
     }
 
-    ScriptingContainer getRuntime() {
+    public ScriptingContainer getRuntime() {
         return runtime;
     }
+
+    public RubyCircuit getRubyCircuit() {
+        return program;
+    }
+
 }
 

@@ -9,19 +9,21 @@ import org.tal.redstonechips.circuit.InterfaceBlock;
  * @author Tal Eisenberg
  */
 public abstract class RubyCircuit {
-    protected rubyc parent;
-    protected String script;
+    protected rubyc circuit;
+    protected RubycScript script;
+    protected String scriptName;
     protected CommandSender currentSender;
-    public String[] args = new String[0];
+    protected String[] args = new String[0];
     public boolean[] inputs;
     public boolean[] outputs;
     public RedstoneChips rc;
     
-    public void setParent(rubyc parent) { 
-        inputs = new boolean[parent.inputs.length];
-        outputs = new boolean[parent.outputs.length];
-        rc = parent.getPlugin();
-        this.parent = parent; 
+    public void setup(rubyc circuit, String scriptName) { 
+        inputs = new boolean[circuit.inputs.length];
+        outputs = new boolean[circuit.outputs.length];
+        rc = circuit.getPlugin();
+        this.circuit = circuit; 
+        this.scriptName = scriptName;
     }
             
         
@@ -30,29 +32,29 @@ public abstract class RubyCircuit {
     public abstract void input(int idx, boolean state);
     
     protected void send(int idx, boolean state) {
-        parent.prgSendBoolean(idx, state);
+        circuit.prgSendBoolean(idx, state);
         
         outputs[idx] = state;
     }
     
     protected void send(int startIdx, int length, int val) {
-        parent.prgSendInt(startIdx, length, val);
+        circuit.prgSendInt(startIdx, length, val);
     }
     
     protected void info(String msg) {
-        if (currentSender!=null) parent.prgInfo(currentSender, msg);
+        if (currentSender!=null) circuit.prgInfo(currentSender, msg);
     }
     
     protected void debug(String msg) {
-        parent.prgDebug(msg);
+        circuit.prgDebug(msg);
     }
     
     protected void error(String msg) {
-        if (currentSender!=null) parent.prgError(currentSender, msg);
+        if (currentSender!=null) circuit.prgError(currentSender, msg);
     }
     
     public void setStateless(boolean stateless) {
-        parent.prgStateless(stateless);
+        circuit.prgStateless(stateless);
     }
     
     protected int bits_to_i(int startIdx, int length, boolean[] bits) {
@@ -64,13 +66,17 @@ public abstract class RubyCircuit {
         return val;
     }
     
-    public String getScript() { return script; }
+    public RubycScript getScript() { return script; }
     
-    public rubyc getRubyc() { return parent; }
+    public rubyc getCircuit() { return circuit; }
     
     public String[] getArgs() { return args; }
     
-    public InterfaceBlock[] getInterfaces() { return parent.interfaceBlocks; }
+    public InterfaceBlock[] getInterfaces() { return circuit.interfaceBlocks; }
     
-    public boolean has_debuggers() { return parent.hasDebuggers(); }
+    public boolean has_debuggers() { return circuit.hasDebuggers(); }
+
+    public String getScriptName() {
+        return scriptName;
+    }
 }

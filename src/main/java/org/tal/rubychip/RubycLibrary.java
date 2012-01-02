@@ -24,10 +24,12 @@ public class RubycLibrary extends CircuitLibrary {
     public static ScriptManager scriptManager;
     
     public static File folder;
-
-    protected RubycCommand command;
-    
     protected static File jrubyJar;
+    
+    private RedstoneChips rc;    
+    protected RubycCommand command;
+    private boolean jrubyLoaded = false;
+    
     
     @Override
     public Class[] getCircuitClasses() {
@@ -36,6 +38,7 @@ public class RubycLibrary extends CircuitLibrary {
 
     @Override
     public void onRedstoneChipsEnable(RedstoneChips instance) {
+        rc = instance;
     }
 
     @Override
@@ -55,28 +58,18 @@ public class RubycLibrary extends CircuitLibrary {
             log(Level.SEVERE, "Can't find jruby.jar in plugin folder.");
             disable(); 
         } else {
-            log(Level.INFO, getDescription().getName() + " " + getDescription().getVersion() + " enabled.");
+            log(Level.INFO, getName() + " " + getVersion() + " enabled.");
             registerCommand();
         }
     }
 
     @Override
     public void onDisable() {
-        // Called when the circuit library plugin is disabled.
-
-    }
-    
-    private void disable() {
-        getServer().getPluginManager().disablePlugin(this);
-    }    
-    
-    private void enable() {
-        getServer().getPluginManager().enablePlugin(this);
-    }    
-
+        log(Level.INFO, getName() + " " + getVersion() + " disabled.");
+    }       
     
     private void registerCommand() {
-        command = new RubycCommand();
+        command = new RubycCommand(rc);
         getCommand("rubyc").setExecutor(command);
     }
     
@@ -95,6 +88,7 @@ public class RubycLibrary extends CircuitLibrary {
             for (URL url : urls)
                 if (url.sameFile(jrubyURL)) {
                     log(Level.INFO, "Using present JRuby.jar from the classpath.");
+                    jrubyLoaded = true;
                     return true;
                 }
 
@@ -107,6 +101,7 @@ public class RubycLibrary extends CircuitLibrary {
             
             log(Level.INFO, "Loading JRuby runtime " + jrubyFile.getPath() + "...");
             scriptManager = new ScriptManager();
+            jrubyLoaded = true;
             return true;            
         } catch (Exception e) {
             log(Level.SEVERE, e.getMessage() + " while adding JRuby.jar to the classpath");
@@ -118,10 +113,20 @@ public class RubycLibrary extends CircuitLibrary {
     public void log(Level l, String m) {
         logger.log(l, getPrefix() + m);
     }
+    
+    private void disable() {
+        getServer().getPluginManager().disablePlugin(this);
+    }    
+    
+    private void enable() {
+        getServer().getPluginManager().enablePlugin(this);
+    }    
 
     private String getPrefix() {
         return "[" + getDescription().getName() + "] ";
     }
+    
+    public boolean isJRubyLoaded() { return jrubyLoaded; }
     
     class JRubyDownloader implements Runnable {
 
