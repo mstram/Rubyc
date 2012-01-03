@@ -31,7 +31,13 @@
             <groupId>org.jruby</groupId>
             <artifactId>jruby</artifactId>
             <version>1.6.5</version>
-        </dependency>        
+        </dependency> 
+        <dependency>
+            <groupId>org.getspout</groupId>
+            <artifactId>spoutpluginapi</artifactId>
+            <version>dev-SNAPSHOT</version>
+        </dependency>
+        
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

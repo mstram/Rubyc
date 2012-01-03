@@ -40,6 +40,25 @@ public class RubycScript extends Script {
         }
     }
         
+    public void save(String newName) throws IOException {
+        setName(newName, true);
+        save();
+    }
+    
+    public void setName(String newName, boolean replace) {
+        if (newName.equals(name)) return;
+        
+        if (replace) {
+            String oldClass = classNameFor(name);
+            String newClass = classNameFor(newName);
+
+            for (int i=0; i<lines.length; i++) 
+                    lines[i] = lines[i].replaceAll(oldClass, newClass);
+        }
+        
+        this.name = newName;
+    }
+    
     RubyCircuit newInstance(ScriptingContainer runtime) {
         Object receiver = runtime.runScriptlet(getScript());
         if (receiver==null || !(receiver instanceof RubyCircuit)) return null;
@@ -89,7 +108,7 @@ public class RubycScript extends Script {
     }
     
     public static RubycScript defaultScript(String name) throws IOException {
-        URL u = name.getClass().getResource(defaultScript);
+        URL u = RubycScript.class.getResource(defaultScript);
         InputStream stream = u.openStream();
         
         StringBuilder scriptBuilder = new StringBuilder();

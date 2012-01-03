@@ -12,6 +12,7 @@ import org.jruby.embed.InvokeFailedException;
 import org.jruby.embed.ScriptingContainer;
 import org.jruby.exceptions.RaiseException;
 import org.tal.redstonechips.circuit.Circuit;
+import org.tal.redstonechips.command.RCarg;
 
 /**
  *
@@ -102,7 +103,8 @@ public class rubyc extends Circuit {
     public void reloadScript(CommandSender sender) {
         this.resetOutputs();
         runtime.clear();
-        
+        args[0] = program.getScript().getName();
+        RCarg.editSignArgs(this, args);
         if (initScript(sender, program.getScript()))
             info(sender, "Reloaded script: " + ChatColor.YELLOW + program.getScript().getFile());
         else info(sender, "Can't reload script.");

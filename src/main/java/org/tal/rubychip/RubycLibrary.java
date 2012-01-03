@@ -10,6 +10,9 @@ import java.net.URLClassLoader;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.logging.Level;
+import org.bukkit.event.Event.Priority;
+import org.bukkit.event.Event.Type;
+import org.bukkit.plugin.Plugin;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.CircuitLibrary;
 import org.tal.rubychip.command.RubycCommand;
@@ -24,8 +27,11 @@ public class RubycLibrary extends CircuitLibrary {
     public static File folder;
     protected static File jrubyJar;
     
+    Plugin spout;
+    
     private RedstoneChips rc;    
     protected RubycCommand command;
+    
     private boolean jrubyLoaded = false;
     
     
@@ -56,8 +62,15 @@ public class RubycLibrary extends CircuitLibrary {
             log(Level.SEVERE, "Can't find jruby.jar in plugin folder.");
             disable(); 
         } else {
-            log(Level.INFO, getName() + " " + getVersion() + " enabled.");
             registerCommand();
+            
+            RubycServerListener listener = new RubycServerListener(this);
+            
+            this.findSpout();
+            this.getServer().getPluginManager().registerEvent(Type.PLUGIN_ENABLE, listener, Priority.Monitor, this);
+            this.getServer().getPluginManager().registerEvent(Type.PLUGIN_DISABLE, listener, Priority.Monitor, this);
+            
+            log(Level.INFO, getName() + " " + getVersion() + " enabled." + (spout!=null?" Spout support enabled.":""));
         }
     }
 
@@ -67,7 +80,7 @@ public class RubycLibrary extends CircuitLibrary {
     }       
     
     private void registerCommand() {
-        command = new RubycCommand(rc);
+        command = new RubycCommand(this);
         getCommand("rubyc").setExecutor(command);
     }
     
@@ -124,6 +137,14 @@ public class RubycLibrary extends CircuitLibrary {
     }
     
     public boolean isJRubyLoaded() { return jrubyLoaded; }
+
+    public RedstoneChips getRC() {
+        return rc;
+    }
+
+    public boolean isSpoutEnabled() {
+        return spout!=null;
+    }
     
     class JRubyDownloader implements Runnable {
 
@@ -155,5 +176,11 @@ public class RubycLibrary extends CircuitLibrary {
             }
         }
         
+    }    
+    
+    public Plugin findSpout() {
+        spout = rc.getServer().getPluginManager().getPlugin("Spout");
+        return spout;
     }
+    
 }

@@ -6,9 +6,9 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.Circuit;
-import org.tal.redstonechips.circuit.CircuitIndex;
 import org.tal.redstonechips.command.CommandUtils;
 import org.tal.redstonechips.util.ParsingUtils;
 import org.tal.redstonechips.util.Range;
@@ -29,32 +29,66 @@ import org.tal.rubychip.script.ReplaceCommand;
  */
 public class RubycCommand implements CommandExecutor {
     private RedstoneChips rc;    
+    private RubycLibrary lib;
             
-    public RubycCommand(RedstoneChips rc) { 
-        this.rc = rc; 
+    public RubycCommand(RubycLibrary lib) { 
+        this.rc = lib.getRC();
+        this.lib = lib;
     }
     
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!command.getName().equals("rubyc")) return false;
-
         if (args.length>0 && "list".startsWith(args[0])) {
-            listScripts(sender);            
+            listScripts(sender);
+            return true;
+        } 
+
+        rubyc r = null;
+        String[] newargs;
+        
+        if (args.length>0 && args[0].startsWith("#")) {
+            String id = args[0].substring(1);
+            Circuit c = rc.getCircuitManager().getCircuitById(id);
+            newargs = new String[args.length-1];
+            System.arraycopy(args, 1, newargs, 0, newargs.length);
+            
+            if (c!=null && c instanceof rubyc) {
+                r = (rubyc)c;
+            } else {
+                sender.sendMessage(rc.getPrefs().getErrorColor() + "Unknown chip id or not a rubyc chip: " + id);
+                return true;
+            }            
         } else {
             Circuit c = CommandUtils.findTargetCircuit(rc, sender, false);
             if (c!=null && (c instanceof rubyc)) {
-                if (!chipCommands(sender, args, (rubyc)c)) {
-                    sender.sendMessage(rc.getPrefs().getErrorColor() + "Bad command syntax.");
-                }
+                r = (rubyc)c;
+                newargs = args;
             } else {
                 generalHelp(sender);
+                return true;
             }
         }
+        
+        if (r==null) return true;
+        
+        if (!chipCommands(sender, newargs, r)) {
+            sender.sendMessage(rc.getPrefs().getErrorColor() + "Bad command syntax.");
+        }
+        
         return true;
     }
 
     private boolean chipCommands(CommandSender sender, String[] args, rubyc chip) {
         if (args.length==0) {
+            // spout popup
+            /*
+            if (lib.isSpoutEnabled() && (sender instanceof Player)) {
+                ScriptWindow popup = new ScriptWindow((Player)sender, chip, lib);
+                popup.open();
+            }
+            */
+                
             editHelp(sender, chip);
             return true;
         } else {
@@ -74,7 +108,7 @@ public class RubycCommand implements CommandExecutor {
                 } else if ("add".startsWith(args[0])) {
                     res = addLines(sender, args, chip);
                 } else if (args[0].equals("save")) {
-                    save(sender, chip.getRubyCircuit());
+                    save(sender, args, chip.getRubyCircuit());
                     res = true;
                 } else if ("undo".startsWith(args[0])) {
                     RubycScript s = chip.getRubyCircuit().getScript();
@@ -107,32 +141,21 @@ public class RubycCommand implements CommandExecutor {
         } 
     }
     
-    private void generalHelp(CommandSender sender) {
-        RubycLibrary lib = null;
-        for (CircuitIndex idx : rc.getCircuitLoader().getCircuitLibraries()) {
-            if (idx instanceof RubycLibrary) {
-                lib = (RubycLibrary)idx;
-                break;
-            }
-        }
-        
+    private void generalHelp(CommandSender sender) {        
         ChatColor extraColor = ChatColor.YELLOW;        
         ChatColor infoColor = rc.getPrefs().getInfoColor();
         ChatColor errorColor = rc.getPrefs().getErrorColor();
         
-        if (lib!=null) {
-            String help = "";
-            String title = ChatColor.LIGHT_PURPLE + lib.getName() + " " + lib.getVersion() + " " + 
-                    (lib.isJRubyLoaded()?ChatColor.AQUA + "(JRuby loaded)":ChatColor.GRAY + "(JRuby missing!)");
+        String help = "";
+        String title = ChatColor.LIGHT_PURPLE + lib.getName() + " " + lib.getVersion() + " " + 
+                (lib.isJRubyLoaded()?ChatColor.AQUA + "(JRuby loaded)":ChatColor.GRAY + "(JRuby missing!)");
 
-            help += infoColor + "Run the command while pointing at a rubyc chip to edit script.\n";
-            help += ChatColor.WHITE + "/rubyc list" + extraColor + " - lists all available scripts.\n";
-            help += infoColor + "alias: " + ChatColor.WHITE + "/rb";
-            
-            CommandUtils.pageMaker(sender, title, "rubyc", help, infoColor, errorColor);
-        } else sender.sendMessage(errorColor + "rubyc chip library was not found.");
-        
-        
+        help += infoColor + "Run the command while pointing at a rubyc chip to edit script.\n";
+        help += ChatColor.WHITE + "/rubyc #<id> ..." + extraColor + " - enter a chip id as 1st argument to remote edit.\n";
+        help += ChatColor.WHITE + "/rubyc list" + extraColor + " - lists all available scripts.\n";
+        help += infoColor + "alias: " + ChatColor.WHITE + "/rb";
+
+        CommandUtils.pageMaker(sender, title, "rubyc", help, infoColor, errorColor);
     }
     
     private void editHelp(CommandSender sender, rubyc r) {
@@ -147,7 +170,7 @@ public class RubycCommand implements CommandExecutor {
         help += ChatColor.WHITE + "/rubyc replace <line-range> 'line'...'line'" + extraColor + " - replaces selected lines with a new line.\n";
         help += ChatColor.WHITE + "/rubyc delete <line-range>" + extraColor + " - deletes all lines in range" + "\n";
         help += ChatColor.WHITE + "/rubyc insert <line-num> 'line'...'line'" + extraColor + " - insert new code lines after line-num.\n";
-        help += ChatColor.WHITE + "/rubyc save" + extraColor + " - save any changes to the script." + "\n";
+        help += ChatColor.WHITE + "/rubyc save [new-name]" + extraColor + " - save any changes to the same script or a new one." + "\n";
         help += ChatColor.WHITE + "/rubyc undo" + extraColor + " - undo last edit command.\n";
         help += ChatColor.WHITE + "/rubyc redo" + extraColor + " - redo last edit command.\n\n";
 
@@ -253,9 +276,11 @@ public class RubycCommand implements CommandExecutor {
         return true;
     }
     
-    private void save(CommandSender sender, RubyCircuit c) {
+    private void save(CommandSender sender, String[] args, RubyCircuit c) {
         try {
-            c.getScript().save();
+            if (args.length<2)
+                c.getScript().save();
+            else c.getScript().save(args[1]);
             sender.sendMessage(rc.getPrefs().getInfoColor() + "Saved script to: " + c.getScript().getFile());
         } catch (IOException e) {
             sender.sendMessage(rc.getPrefs().getErrorColor() + e.toString());
