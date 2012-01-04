@@ -39,8 +39,9 @@ public class RubycCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!command.getName().equals("rubyc")) return false;
-        if (args.length>0 && "list".startsWith(args[0])) {
-            listScripts(sender);
+        if (args.length>0) {
+            if ("list".startsWith(args[0])) 
+                listScripts(sender);
             return true;
         } 
 
