@@ -13,6 +13,7 @@ import org.jruby.embed.ScriptingContainer;
 import org.jruby.exceptions.RaiseException;
 import org.tal.redstonechips.circuit.Circuit;
 import org.tal.redstonechips.command.RCarg;
+import org.tal.redstonechips.util.BitSet7;
 
 /**
  *
@@ -148,6 +149,14 @@ public class rubyc extends Circuit {
         sendInt(startIdx, length, val);
     }
     
+    void prgSendBitSet(BitSet7 bits) {
+        sendBitSet(bits);
+    }
+    
+    void prgSendBitSet(int startIdx, int length, BitSet7 bits) {
+        sendBitSet(startIdx, length, bits);
+    }
+    
     void prgStateless(boolean stateless) {
         this.stateless = stateless;
     }
@@ -179,6 +188,5 @@ public class rubyc extends Circuit {
     public RubyCircuit getRubyCircuit() {
         return program;
     }
-
 }
 

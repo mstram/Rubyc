@@ -3,6 +3,7 @@ package org.tal.rubychip;
 import org.bukkit.command.CommandSender;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.InterfaceBlock;
+import org.tal.redstonechips.util.BitSet7;
 
 /**
  *
@@ -41,6 +42,14 @@ public abstract class RubyCircuit {
     
     protected void send(int startIdx, int length, int val) {
         circuit.prgSendInt(startIdx, length, val);
+    }
+    
+    protected void send(int startIdx, int length, BitSet7 bits) {        
+        circuit.prgSendBitSet(startIdx, length, bits);
+    }
+
+    protected void send(BitSet7 bits) {
+        circuit.prgSendBitSet(bits);
     }
     
     protected void info(String msg) {
