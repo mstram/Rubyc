@@ -65,6 +65,19 @@ public class rubyc extends Circuit {
         } else return false;
     }
 
+    @Override
+    public void circuitShutdown() {
+        try {
+            program.shutdown();
+        } catch (InvokeFailedException e) {
+            debug("on shutdown: " + e.getMessage());
+        } catch (RaiseException e) {
+            rubyException(null, "shutdown", e);
+        } catch (RuntimeException e) {
+            debug("on shutdown: " + e.getMessage());
+        } 
+    }
+    
     private boolean initScript(CommandSender sender, RubycScript script) {
         try {
             boolean res;

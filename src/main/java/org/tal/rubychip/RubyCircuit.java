@@ -31,6 +31,8 @@ public abstract class RubyCircuit {
     
     public abstract void input(int idx, boolean state);
     
+    public void shutdown() {}
+    
     protected void send(int idx, boolean state) {
         circuit.prgSendBoolean(idx, state);
         
@@ -78,5 +80,9 @@ public abstract class RubyCircuit {
 
     public String getScriptName() {
         return scriptName;
+    }
+    
+    public CommandSender getSender() {
+        return currentSender;
     }
 }

@@ -1,5 +1,5 @@
 require 'java'
-java_import 'org.tal.rubychip.RubyCircuit'
+import 'org.tal.rubychip.RubyCircuit'
 
 class CLASS123597132467298 < RubyCircuit
   def init
