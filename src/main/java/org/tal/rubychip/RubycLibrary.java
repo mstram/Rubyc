@@ -179,8 +179,9 @@ public class RubycLibrary extends CircuitLibrary {
     }    
     
     public Plugin findSpout() {
-        spout = rc.getServer().getPluginManager().getPlugin("Spout");
-        return spout;
+        if (rc!=null)
+            return rc.getServer().getPluginManager().getPlugin("Spout");
+        else return null;
     }
     
 }

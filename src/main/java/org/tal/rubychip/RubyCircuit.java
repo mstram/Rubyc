@@ -2,7 +2,7 @@ package org.tal.rubychip;
 
 import org.bukkit.command.CommandSender;
 import org.tal.redstonechips.RedstoneChips;
-import org.tal.redstonechips.circuit.InterfaceBlock;
+import org.tal.redstonechips.circuit.io.InterfaceBlock;
 import org.tal.redstonechips.util.BitSet7;
 
 /**
