@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.jruby.RubyInstanceConfig.CompileMode;
+import org.jruby.embed.LocalContextScope;
 import org.jruby.embed.ScriptingContainer;
 
 /**
@@ -31,7 +32,8 @@ public class ScriptManager {
     }
                          
     public static ScriptingContainer createRuntime() {
-        ScriptingContainer runtime = new ScriptingContainer();
+        ScriptingContainer runtime = new ScriptingContainer(LocalContextScope.SINGLETHREAD);
+
         runtime.setCompileMode(CompileMode.JIT);
         runtime.setLoadPaths(Arrays.asList(new String[] {RubycLibrary.folder.getAbsolutePath()}));
         runtime.setClassLoader(rubyc.class.getClassLoader());

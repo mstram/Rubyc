@@ -22,7 +22,7 @@ public class RubycScript extends Script {
     private static final String defaultScript = "/default.rb";
     
     public final static Pattern NAME_PATTERN = Pattern.compile("[a-zA-Z][a-zA-Z0-9_]*");
-        
+    
     public RubycScript(String name, String script) {
         this.setScript(name, script);
     }   
@@ -49,20 +49,21 @@ public class RubycScript extends Script {
             String newClass = classNameFor(newName);
 
             for (int i=0; i<lines.length; i++) 
-                    lines[i] = lines[i].replaceAll(oldClass, newClass);
+                lines[i] = lines[i].replaceAll(oldClass, newClass);            
         }
         
         this.name = newName;
     }
     
     RubyCircuit newInstance(ScriptingContainer runtime) {
+        runtime.setScriptFilename(getFile().getName());
         Object receiver = runtime.runScriptlet(getScript());
         if (receiver==null || !(receiver instanceof RubyCircuit)) return null;
         else {
             RubyCircuit c = (RubyCircuit)receiver;
             c.script = this;
             return (RubyCircuit)receiver;
-        }
+        } 
     }
     
     public File getFile() {
@@ -108,7 +109,7 @@ public class RubycScript extends Script {
         InputStream stream = u.openStream();
         
         StringBuilder scriptBuilder = new StringBuilder();
-        String nl = System.getProperty("line.separator");        
+        String nl = System.getProperty("line.separator");
         Scanner scanner = new Scanner(stream);
         try {
             while (scanner.hasNextLine()) {
@@ -121,6 +122,7 @@ public class RubycScript extends Script {
         
         String script = scriptBuilder.toString();
         script = script.replaceAll("CLASS123597132467298", classNameFor(name));
+
         return new RubycScript(name, script);
     }
 }

@@ -71,7 +71,7 @@ public class rubyc extends Circuit {
             rubyException(null, "shutdown", e);
         } catch (RuntimeException e) {
             debug("on shutdown: " + e.getMessage());
-        } 
+        }         
     }
     
     @Override
@@ -137,7 +137,7 @@ public class rubyc extends Circuit {
     
     public void reloadScript(CommandSender sender) {
         this.resetOutputs();
-        runtime.clear();
+        runtime = ScriptManager.createRuntime();
         args[0] = program.getScript().getName();
         RCarg.editSignArgs(this, args);
         if (initScript(sender, program.getScript()))
