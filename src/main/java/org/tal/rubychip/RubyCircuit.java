@@ -34,6 +34,10 @@ public abstract class RubyCircuit {
     
     public void shutdown() {}
     
+    public void save() {}
+    
+    public void destroyed() {}
+    
     protected void send(int idx, boolean state) {
         circuit.prgSendBoolean(idx, state);
         

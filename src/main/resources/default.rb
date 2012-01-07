@@ -9,7 +9,9 @@ class CLASS123597132467298 < RubyCircuit
 
   def input(idx, state)
     debug idx.to_s() + ": " + state.to_s()
-    send idx, state
+    if idx < outputs.length
+      send idx, state
+    end
   end
 end
 

@@ -74,6 +74,32 @@ public class rubyc extends Circuit {
         } 
     }
     
+    @Override
+    public void save() {
+        try {
+            program.save();
+        } catch (InvokeFailedException e) {
+            debug("on save: " + e.getMessage());
+        } catch (RaiseException e) {
+            rubyException(null, "save", e);
+        } catch (RuntimeException e) {
+            debug("on save: " + e.getMessage());
+        }         
+    }
+    
+    @Override
+    public void circuitDestroyed() {
+        try {
+            program.destroyed();
+        } catch (InvokeFailedException e) {
+            debug("on destroyed: " + e.getMessage());
+        } catch (RaiseException e) {
+            rubyException(null, "destroyed", e);
+        } catch (RuntimeException e) {
+            debug("on destroyed: " + e.getMessage());
+        }                 
+    }
+    
     private boolean initScript(CommandSender sender, RubycScript script) {
         try {
             boolean res;

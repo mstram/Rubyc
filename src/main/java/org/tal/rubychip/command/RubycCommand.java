@@ -6,7 +6,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.Circuit;
 import org.tal.redstonechips.command.CommandUtils;
