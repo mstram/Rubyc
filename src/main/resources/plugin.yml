@@ -4,7 +4,19 @@ version: 0.1
 depend: [RedstoneChips]
 commands:
   rubyc:
-    description: View and edit the chip script.
+    description: In-game script editor.
     usage: |
       `rubyc`
     aliases: [rb]
+permissions:
+  rubyc.script.*:
+    description: Allow viewing and modifying rubyc chip sciprts.
+    children:
+      rubyc.script.view: true
+      rubyc.script.modify: true
+  rubyc.script.view:
+    description: Allow viewing rubyc chip scripts.
+  rubyc.script.modify:
+    description: Allow modifying rubyc chip scripts.  
+  rubyc.script.id:
+    description: Allow remotely view and modify rubyc script using chip id.

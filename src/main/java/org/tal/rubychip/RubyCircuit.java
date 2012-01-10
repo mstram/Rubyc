@@ -98,4 +98,31 @@ public abstract class RubyCircuit {
     public CommandSender getSender() {
         return currentSender;
     }
+    
+    public int scheduleSyncTask(Runnable task) {
+        return rc.getServer().getScheduler().scheduleSyncDelayedTask(rc, task);
+    }
+    
+    public int scheduleSyncDelayedTask(long delay, Runnable task) {
+        return rc.getServer().getScheduler().scheduleSyncDelayedTask(rc, task, delay);
+    }
+    public int scheduleSyncRepeatingTask(long delay, long period, Runnable task) {
+        return rc.getServer().getScheduler().scheduleSyncRepeatingTask(rc, task, delay, period);
+    }
+
+    public int scheduleAsyncTask(Runnable task) {
+        return rc.getServer().getScheduler().scheduleAsyncDelayedTask(rc, task);
+    }
+
+    public int scheduleAsyncDelayedTask(long delay, Runnable task) {
+        return rc.getServer().getScheduler().scheduleAsyncDelayedTask(rc, task, delay);
+    }
+
+    public int scheduleAsyncRepeatingTask(long delay, long period, Runnable task) {
+        return rc.getServer().getScheduler().scheduleAsyncRepeatingTask(rc, task, delay, period);
+    }
+    
+    public void cancelTask(int taskId) {
+        rc.getServer().getScheduler().cancelTask(taskId);
+    }
 }

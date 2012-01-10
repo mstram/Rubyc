@@ -6,6 +6,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.jruby.embed.ScriptingContainer;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.Circuit;
 import org.tal.redstonechips.command.CommandUtils;
@@ -21,6 +23,7 @@ import org.tal.rubychip.script.AddCommand;
 import org.tal.rubychip.script.DeleteCommand;
 import org.tal.rubychip.script.InsertCommand;
 import org.tal.rubychip.script.ReplaceCommand;
+import util.NullPrintStream;
 
 /**
  *
@@ -42,6 +45,9 @@ public class RubycCommand implements CommandExecutor {
             if ("list".startsWith(args[0])) {
                 listScripts(sender);
                 return true;
+            } else if ("help".startsWith(args[0])) {
+                fullHelp(sender);
+                return true;
             }
         } 
 
@@ -49,6 +55,11 @@ public class RubycCommand implements CommandExecutor {
         String[] newargs;
         
         if (args.length>0 && args[0].startsWith("#")) {
+            if (!checkPermission(rc, sender, "rubyc.script.id", true)) {
+                sender.sendMessage(rc.getPrefs().getErrorColor() + "You do not have permission to remotely modify or view rubyc scripts.");
+                return true;
+            }
+            
             String id = args[0].substring(1);
             Circuit c = rc.getCircuitManager().getCircuitById(id);
             newargs = new String[args.length-1];
@@ -92,11 +103,21 @@ public class RubycCommand implements CommandExecutor {
                 
             editHelp(sender, chip);
             return true;
-        } else {
+        } else {            
             if ("print".startsWith(args[0])) {
+                if (!checkPermission(rc, sender, "rubyc.script.view", false)) {
+                    sender.sendMessage(rc.getPrefs().getErrorColor() + "You do not have permission to view rubyc scripts.");
+                    return true;
+                }
+                
                 printLines(sender, args, chip.getRubyCircuit());
                 return true;
             } else {
+                if (!checkPermission(rc, sender, "rubyc.script.modify", false)) {
+                    sender.sendMessage(rc.getPrefs().getErrorColor() + "You do not have permission to modify rubyc scripts.");
+                    return true;
+                }
+                
                 boolean res;
                 boolean automaticReload = true;
                 
@@ -142,30 +163,56 @@ public class RubycCommand implements CommandExecutor {
         } 
     }
     
-    private void generalHelp(CommandSender sender) {        
-        ChatColor extraColor = ChatColor.YELLOW;        
+    private void fullHelp(CommandSender sender) {
         ChatColor infoColor = rc.getPrefs().getInfoColor();
         ChatColor errorColor = rc.getPrefs().getErrorColor();
+        ChatColor extraColor = ChatColor.YELLOW;
+        
+        String help = getHelpString(infoColor) + "\n\n";
+        help += getEditHelp(infoColor, extraColor);
+        
+        CommandUtils.pageMaker(sender, "Rubyc help", "rubyc", help, infoColor, errorColor);
+    }
+    
+    private void generalHelp(CommandSender sender) {        
+        ChatColor infoColor = rc.getPrefs().getInfoColor();
+        ChatColor errorColor = rc.getPrefs().getErrorColor();
+
+        CommandUtils.pageMaker(sender, getJRubyString(), "rubyc", getHelpString(infoColor), infoColor, errorColor);
+    }
+    
+    private String getHelpString(ChatColor infoColor) {
+        ChatColor extraColor = ChatColor.YELLOW;        
         
         String help = "";
-        String title = ChatColor.LIGHT_PURPLE + lib.getName() + " " + lib.getVersion() + " " + 
-                (lib.isJRubyLoaded()?ChatColor.AQUA + "(JRuby loaded)":ChatColor.GRAY + "(JRuby missing!)");
 
         help += infoColor + "Run the command while pointing at a rubyc chip to edit script.\n";
         help += ChatColor.WHITE + "/rubyc #<id> ..." + extraColor + " - enter a chip id as 1st argument to remote edit.\n";
         help += ChatColor.WHITE + "/rubyc list" + extraColor + " - lists all available scripts.\n";
+        help += ChatColor.WHITE + "/rubyc help" + extraColor + " - prints command help.\n";
         help += infoColor + "alias: " + ChatColor.WHITE + "/rb";
-
-        CommandUtils.pageMaker(sender, title, "rubyc", help, infoColor, errorColor);
+        
+        return help;
+    }
+    
+    private String getJRubyString() {
+        return ChatColor.LIGHT_PURPLE + lib.getName() + " " + lib.getVersion() + " " + 
+                (lib.isJRubyLoaded()?ChatColor.AQUA + "(JRuby loaded)":ChatColor.GRAY + "(JRuby missing!)");
     }
     
     private void editHelp(CommandSender sender, rubyc r) {
-        ChatColor extraColor = ChatColor.YELLOW;        
+        ChatColor extraColor = ChatColor.YELLOW;
         ChatColor infoColor = rc.getPrefs().getInfoColor();
         
         String scriptPath = RubycScript.getScriptFile(r.getRubyCircuit().getScriptName()).getName();
-        String help = "";
         String title = extraColor + r.getChipString() + infoColor + " running " + extraColor + scriptPath + "\n";
+
+        CommandUtils.pageMaker(sender, title, "rubyc", getEditHelp(infoColor, extraColor), 
+                infoColor, rc.getPrefs().getErrorColor());
+    }
+    
+    private String getEditHelp(ChatColor infoColor, ChatColor extraColor) {
+        String help = "";
         help += infoColor + "Script editing commands:" + "\n";
         help += ChatColor.WHITE + "/rubyc print [line-range]" + extraColor + " - prints the rubyc script.\n";
         help += ChatColor.WHITE + "/rubyc replace <line-range> 'line'...'line'" + extraColor + " - replaces selected lines with a new line.\n";
@@ -184,11 +231,14 @@ public class RubycCommand implements CommandExecutor {
         help += ChatColor.WHITE + "   /rb rep 10..11 '# comment'" + extraColor + " - replace lines 10 to 11 with a new line.\n";
         help += ChatColor.WHITE + "   /rb del 10.." + extraColor + " - delete script from line 10 to its end.\n";
         help += ChatColor.WHITE + "   /rb i 11 'def init' '   info \"test\"'" + extraColor + " - insert 2 lines between lines 10 and 11.\n";
-        CommandUtils.pageMaker(sender, title, "rubyc", help, infoColor, rc.getPrefs().getErrorColor());
+        
+        return help;
     }
     
     private void listScripts(CommandSender sender) {
-        List<String> list = ScriptManager.getAvailableScripts(ScriptManager.createRuntime());
+        ScriptingContainer runtime = ScriptManager.createRuntime();
+        runtime.setError(new NullPrintStream());
+        List<String> list = ScriptManager.getAvailableScripts(runtime);
         if (list.isEmpty()) {
             sender.sendMessage(rc.getPrefs().getInfoColor() + "There are no scripts yet.");
         } else {
@@ -324,5 +374,12 @@ public class RubycCommand implements CommandExecutor {
         return lines;
     }
 
+    public static boolean checkPermission(RedstoneChips rc, CommandSender sender, String permNode, boolean opRequired) {
+        if (!rc.getPrefs().getUsePermissions()) return (opRequired?sender.isOp():true);
+        if (!(sender instanceof Player)) return true;
+        
+        return ((Player)sender).hasPermission(permNode);
+    }
+    
     
 }

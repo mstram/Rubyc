@@ -1,6 +1,7 @@
 package org.tal.rubychip;
 
 import java.io.IOException;
+import java.io.Writer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.jruby.embed.InvokeFailedException;
@@ -54,6 +55,7 @@ public class rubyc extends Circuit {
         } 
         
         runtime = ScriptManager.createRuntime();
+        runtime.setError(new DebugWriter());
         
         if (initScript(sender, script)) {
             info(sender, "Successfully activated ruby circuit: " + ChatColor.YELLOW + script.getFile());
@@ -208,6 +210,23 @@ public class rubyc extends Circuit {
 
     public RubyCircuit getRubyCircuit() {
         return program;
+    }
+    
+    class DebugWriter extends Writer {
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            debug(new String(cbuf, off, len));
+        }
+
+        @Override
+        public void flush() throws IOException {
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+        
     }
 }
 
