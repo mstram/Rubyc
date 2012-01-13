@@ -3,7 +3,6 @@ package org.tal.rubychip;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,31 +35,32 @@ public class ScriptManager {
         ScriptingContainer runtime = new ScriptingContainer(LocalContextScope.SINGLETHREAD);
 
         runtime.setCompileMode(CompileMode.JIT);
-        runtime.setLoadPaths(Arrays.asList(new String[] {RubycLibrary.folder.getAbsolutePath()}));
+        String[] paths = new String[] {
+            "file:" + RubycLibrary.jrubyJar.getAbsoluteFile() + "!/META_INF/jruby.home/lib/ruby/site_ruby/1.9",
+            "file:" + RubycLibrary.jrubyJar.getAbsoluteFile() + "!/META_INF/jruby.home/lib/ruby/site_ruby/shared",
+            "file:" + RubycLibrary.jrubyJar.getAbsoluteFile() + "!/META_INF/jruby.home/lib/ruby/1.9",
+            RubycLibrary.folder.getAbsolutePath()                
+        };
+        runtime.setLoadPaths(Arrays.asList(paths));
         runtime.setClassLoader(rubyc.class.getClassLoader());
         
         return runtime;
     }
     
     public static List<String> getAvailableScripts(ScriptingContainer runtime) {
-        List<String> paths = runtime.getLoadPaths();        
         List<String> ret = new ArrayList<String>();
         
-        for (String p : paths) {
-            File d = new File(p);
-            File[] files = d.listFiles();
-            for (File f : files) {
-                if (f.getName().endsWith(".rb")) {
-                    String name = f.getName().substring(0, f.getName().length()-3);
-                    try {
-                        RubycScript s = getScript(name);
-                        if (s.newInstance(runtime)!=null);
-                            ret.add(name);
-                    } catch (IOException ex) {
-                    } catch (RuntimeException ex) {}
-                }
+        File[] files = RubycLibrary.folder.listFiles();
+        for (File f : files) {
+            if (f.getName().endsWith(".rb")) {
+                String name = f.getName().substring(0, f.getName().length()-3);
+                try {
+                    RubycScript s = getScript(name);
+                    if (s.newInstance(runtime)!=null);
+                        ret.add(name);
+                } catch (IOException ex) {
+                } catch (RuntimeException ex) {}
             }
-                
         }
         
         return ret;

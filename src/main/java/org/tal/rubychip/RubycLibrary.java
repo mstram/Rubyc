@@ -22,10 +22,10 @@ import org.tal.rubychip.command.RubycCommand;
  * @author Tal Eisenberg
  */
 public class RubycLibrary extends CircuitLibrary {
-    public static final String jrubyAddress = "http://repo1.maven.org/maven2/org/jruby/jruby/1.6.5/jruby-1.6.5.jar";
+    public static final String jrubyAddress = "http://repo1.maven.org/maven2/org/jruby/jruby-complete/1.6.5.1/jruby-complete-1.6.5.1.jar";
     
     public static File folder;
-    protected static File jrubyJar;
+    public static File jrubyJar;
     
     Plugin spout;
     
@@ -151,7 +151,7 @@ public class RubycLibrary extends CircuitLibrary {
         @Override
         public void run() {
             URL url = null;
-            log(Level.INFO, "Downloading jruby 1.6.5...");
+            log(Level.INFO, "Downloading jruby 1.6.5.1...");
             
             try {
                 url = new URL(jrubyAddress);

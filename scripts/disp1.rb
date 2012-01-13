@@ -1,31 +1,33 @@
 require 'java'
 java_import 'org.tal.rubychip.RubyCircuit'
-require 'lib/displaycircuit'
+require 'lib/displaycontroller'
 
-class Disp1 < DisplayCircuit  
+class Disp1 < RubyCircuit  
   def init
-    if !initdisplay
-      return false
-    end
-    
-    def_color1= 15
+    def_color1 = 15
     def_color2 = 14
 
     info "disp demo 1 (args: width height [color1 color2])"
 
     @direction = 1    
 
-    if args.length>2
+    @disp = DisplayController.new()
+    
+    if !@disp.initdisplay args[0].to_i, args[1].to_i, self, nil
+      return false
+    end
+        
+    if args.length>=3
       @color1 = args[2].to_i
     else @color1 = def_color1
     end
     
-    if args.length>3
+    if args.length>=4
       @color2 = args[3].to_i
     else @color2 = def_color2
     end
     
-    cleardisplay(@color1)
+    @disp.clear @color1
 
     @x = 0
     @y = 0
@@ -36,8 +38,7 @@ class Disp1 < DisplayCircuit
   end
 
   def input(idx, state)
-    # when getting clock
-    if idx==0 
+    if idx==0 # clock input.
       if state
         step
       end      
@@ -56,10 +57,10 @@ class Disp1 < DisplayCircuit
       debug("x=#{@x} y=#{@y}")
     end
     if @lastX>=0 
-      paint @lastX, @lastY, @color1
+      @disp.paint @lastX, @lastY, @color1
     end
     
-    paint @x, @y, @color2
+    @disp.paint @x, @y, @color2
     
     @lastX = @x
     @lastY = @y
@@ -67,7 +68,7 @@ class Disp1 < DisplayCircuit
      
   def stepy
     @y += @direction
-    if @y>=@dispHeight
+    if @y>=@disp.height
       @y -= 1
       @direction = -@direction
       stepx
@@ -83,7 +84,7 @@ class Disp1 < DisplayCircuit
   
   def stepx
     @x += 1
-    if @x>=@dispWidth
+    if @x>=@disp.width
       @x = 0
     end
   end  

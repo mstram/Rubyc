@@ -53,10 +53,10 @@ public class rubyc extends Circuit {
             error(sender, redstoneChips.getPrefs().getInfoColor() + "on load: " + redstoneChips.getPrefs().getErrorColor() + ex.getMessage());
             return false;
         } 
-        
+        DebugWriter debugWriter = new DebugWriter();
         runtime = ScriptManager.createRuntime();
-        runtime.setError(new DebugWriter());
-        
+        runtime.setError(debugWriter);
+        runtime.setOutput(debugWriter);
         if (initScript(sender, script)) {
             info(sender, "Successfully activated ruby circuit: " + ChatColor.YELLOW + script.getFile());
             return true;
