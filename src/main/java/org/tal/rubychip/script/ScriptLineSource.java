@@ -1,15 +1,14 @@
-package org.tal.rubychip.command;
+package org.tal.rubychip.script;
 
 import org.bukkit.ChatColor;
-import org.tal.redstonechips.command.LineSource;
+import org.tal.redstonechips.page.LineSource;
 import org.tal.rubychip.RubycScript;
-import org.tal.rubychip.script.Script;
 
 /**
  *
  * @author Tal Eisenberg
  */
-class ScriptLineSource implements LineSource {
+public class ScriptLineSource implements LineSource {
     private String[] script;
     private int firstLine, lastLine;
     
@@ -28,7 +27,7 @@ class ScriptLineSource implements LineSource {
     }
 
     @Override
-    public float getLineCount() {
+    public int getLineCount() {
         return lastLine-firstLine+1;
     }
     

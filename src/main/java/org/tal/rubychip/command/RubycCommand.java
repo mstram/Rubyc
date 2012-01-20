@@ -7,23 +7,15 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.jruby.embed.ScriptingContainer;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.Circuit;
 import org.tal.redstonechips.command.CommandUtils;
+import org.tal.redstonechips.page.Pager;
 import org.tal.redstonechips.util.ParsingUtils;
 import org.tal.redstonechips.util.Range;
 import org.tal.redstonechips.util.Tokenizer;
-import org.tal.rubychip.RubyCircuit;
-import org.tal.rubychip.RubycLibrary;
-import org.tal.rubychip.RubycScript;
-import org.tal.rubychip.ScriptManager;
-import org.tal.rubychip.rubyc;
-import org.tal.rubychip.script.AddCommand;
-import org.tal.rubychip.script.DeleteCommand;
-import org.tal.rubychip.script.InsertCommand;
-import org.tal.rubychip.script.ReplaceCommand;
-import util.NullPrintStream;
+import org.tal.rubychip.*;
+import org.tal.rubychip.script.*;
 
 /**
  *
@@ -51,7 +43,7 @@ public class RubycCommand implements CommandExecutor {
             }
         } 
 
-        rubyc r = null;
+        rubyc r;
         String[] newargs;
         
         if (args.length>0 && args[0].startsWith("#")) {
@@ -171,14 +163,14 @@ public class RubycCommand implements CommandExecutor {
         String help = getHelpString(infoColor) + "\n\n";
         help += getEditHelp(infoColor, extraColor);
         
-        CommandUtils.pageMaker(sender, "Rubyc help", "rubyc", help, infoColor, errorColor);
+        Pager.beginPaging(sender, "Rubyc help", help, infoColor, errorColor);
     }
     
     private void generalHelp(CommandSender sender) {        
         ChatColor infoColor = rc.getPrefs().getInfoColor();
         ChatColor errorColor = rc.getPrefs().getErrorColor();
 
-        CommandUtils.pageMaker(sender, getJRubyString(), "rubyc", getHelpString(infoColor), infoColor, errorColor);
+        Pager.beginPaging(sender, getJRubyString(), getHelpString(infoColor), infoColor, errorColor);
     }
     
     private String getHelpString(ChatColor infoColor) {
@@ -207,7 +199,7 @@ public class RubycCommand implements CommandExecutor {
         String scriptPath = RubycScript.getScriptFile(r.getRubyCircuit().getScriptName()).getName();
         String title = extraColor + r.getChipString() + infoColor + " running " + extraColor + scriptPath + "\n";
 
-        CommandUtils.pageMaker(sender, title, "rubyc", getEditHelp(infoColor, extraColor), 
+        Pager.beginPaging(sender, title, getEditHelp(infoColor, extraColor), 
                 infoColor, rc.getPrefs().getErrorColor());
     }
     
@@ -236,9 +228,7 @@ public class RubycCommand implements CommandExecutor {
     }
     
     private void listScripts(CommandSender sender) {
-        ScriptingContainer runtime = ScriptManager.createRuntime();
-        runtime.setError(new NullPrintStream());
-        List<String> list = ScriptManager.getAvailableScripts(runtime);
+        List<String> list = ScriptManager.getAvailableScripts();
         if (list.isEmpty()) {
             sender.sendMessage(rc.getPrefs().getInfoColor() + "There are no scripts yet.");
         } else {
@@ -249,7 +239,7 @@ public class RubycCommand implements CommandExecutor {
 
             c = c.substring(0, c.length()-2);
             
-            CommandUtils.pageMaker(sender, "Available scripts", "rubyc list", c, rc.getPrefs().getInfoColor(), rc.getPrefs().getErrorColor());
+            Pager.beginPaging(sender, "Available scripts", c, rc.getPrefs().getInfoColor(), rc.getPrefs().getErrorColor());
         }
         
     }
@@ -262,7 +252,7 @@ public class RubycCommand implements CommandExecutor {
         } else range = new int[] {0, RubycScript.LAST_LINE};
         
         if (range!=null)
-            CommandUtils.pageMaker(sender, r.getScriptName() + ".rb", "rubyc", new ScriptLineSource(r.getScript(), range[0], range[1]), rc.getPrefs().getInfoColor(), rc.getPrefs().getErrorColor());
+            Pager.beginPaging(sender, r.getScriptName() + ".rb", new ScriptLineSource(r.getScript(), range[0], range[1]), rc.getPrefs().getInfoColor(), rc.getPrefs().getErrorColor());
     }
 
     private boolean replaceLines(CommandSender sender, String[] args, rubyc chip) {

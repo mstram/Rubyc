@@ -9,6 +9,7 @@ import java.util.List;
 import org.jruby.RubyInstanceConfig.CompileMode;
 import org.jruby.embed.LocalContextScope;
 import org.jruby.embed.ScriptingContainer;
+import util.NullPrintStream;
 
 /**
  *
@@ -47,7 +48,10 @@ public class ScriptManager {
         return runtime;
     }
     
-    public static List<String> getAvailableScripts(ScriptingContainer runtime) {
+    public static List<String> getAvailableScripts() {
+        ScriptingContainer runtime = ScriptManager.createRuntime();
+        runtime.setError(new NullPrintStream());
+        
         List<String> ret = new ArrayList<String>();
         
         File[] files = RubycLibrary.folder.listFiles();
