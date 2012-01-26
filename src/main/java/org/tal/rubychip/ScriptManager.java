@@ -9,7 +9,7 @@ import java.util.List;
 import org.jruby.RubyInstanceConfig.CompileMode;
 import org.jruby.embed.LocalContextScope;
 import org.jruby.embed.ScriptingContainer;
-import util.NullPrintStream;
+import org.tal.rubychip.util.NullPrintStream;
 
 /**
  *
@@ -32,10 +32,10 @@ public class ScriptManager {
         return script;
     }
                          
-    public static ScriptingContainer createRuntime() {
+    public static ScriptingContainer createRuntime() {   
         ScriptingContainer runtime = new ScriptingContainer(LocalContextScope.SINGLETHREAD);
-
-        runtime.setCompileMode(CompileMode.JIT);
+        runtime.getProvider().getRubyInstanceConfig().setJRubyHome(RubycLibrary.jrubyHome.getAbsolutePath());
+        runtime.setCompileMode(CompileMode.JIT);        
         String[] paths = new String[] {
             "file:" + RubycLibrary.jrubyJar.getAbsoluteFile() + "!/META_INF/jruby.home/lib/ruby/site_ruby/1.9",
             "file:" + RubycLibrary.jrubyJar.getAbsoluteFile() + "!/META_INF/jruby.home/lib/ruby/site_ruby/shared",
@@ -44,7 +44,7 @@ public class ScriptManager {
         };
         runtime.setLoadPaths(Arrays.asList(paths));
         runtime.setClassLoader(rubyc.class.getClassLoader());
-        
+
         return runtime;
     }
     
@@ -70,4 +70,23 @@ public class ScriptManager {
         return ret;
     }
     
+    public static void installGem(final String gemName) {
+        executeBinScript(new String[] {"gem", "install", gemName, "-i", RubycLibrary.jrubyGem.getAbsolutePath()});
+    }
+
+    public static void listGems() {
+        executeBinScript(new String[] {"gem", "list"});
+    }
+    
+    public static void executeBinScript(final String[] args) {
+        new Thread() {
+            @Override
+            public void run() {
+                String[] rargs = new String[args.length+1];
+                rargs[0]="-S";
+                System.arraycopy(args, 0, rargs, 1, args.length);
+                //runBinScript(args);
+            }
+        }.start();                
+    }
 }

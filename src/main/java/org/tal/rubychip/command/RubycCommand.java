@@ -2,6 +2,10 @@ package org.tal.rubychip.command;
 
 import java.io.IOException;
 import java.util.List;
+import net.eisental.common.page.Pager;
+import net.eisental.common.parsing.ParsingUtils;
+import net.eisental.common.parsing.Range;
+import net.eisental.common.parsing.Tokenizer;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,10 +14,6 @@ import org.bukkit.entity.Player;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.Circuit;
 import org.tal.redstonechips.command.CommandUtils;
-import org.tal.redstonechips.page.Pager;
-import org.tal.redstonechips.util.ParsingUtils;
-import org.tal.redstonechips.util.Range;
-import org.tal.redstonechips.util.Tokenizer;
 import org.tal.rubychip.*;
 import org.tal.rubychip.script.*;
 
@@ -39,6 +39,12 @@ public class RubycCommand implements CommandExecutor {
                 return true;
             } else if ("help".startsWith(args[0])) {
                 fullHelp(sender);
+                return true;
+            } else if (args[0].equalsIgnoreCase("gem")) {
+                if (args.length>1)
+                    ScriptManager.installGem(args[1]);
+                else ScriptManager.listGems();
+                
                 return true;
             }
         } 

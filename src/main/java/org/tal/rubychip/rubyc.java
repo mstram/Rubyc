@@ -9,7 +9,7 @@ import org.jruby.embed.ScriptingContainer;
 import org.jruby.exceptions.RaiseException;
 import org.tal.redstonechips.circuit.Circuit;
 import org.tal.redstonechips.command.RCarg;
-import org.tal.redstonechips.util.BitSet7;
+import org.tal.redstonechips.bitset.BitSet7;
 
 /**
  *

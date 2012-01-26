@@ -2,8 +2,8 @@ package org.tal.rubychip;
 
 import org.bukkit.command.CommandSender;
 import org.tal.redstonechips.RedstoneChips;
+import org.tal.redstonechips.bitset.BitSet7;
 import org.tal.redstonechips.circuit.io.InterfaceBlock;
-import org.tal.redstonechips.util.BitSet7;
 
 /**
  *
@@ -89,7 +89,7 @@ public abstract class RubyCircuit {
     
     public InterfaceBlock[] getInterfaces() { return circuit.interfaceBlocks; }
     
-    public boolean has_debuggers() { return circuit.hasDebuggers(); }
+    public boolean has_listeners() { return circuit.hasListeners(); }
 
     public String getScriptName() {
         return scriptName;

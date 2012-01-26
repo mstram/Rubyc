@@ -1,7 +1,7 @@
 package org.tal.rubychip.script;
 
 import org.bukkit.ChatColor;
-import org.tal.redstonechips.page.LineSource;
+import net.eisental.common.page.LineSource;
 import org.tal.rubychip.RubycScript;
 
 /**

@@ -26,6 +26,8 @@ public class RubycLibrary extends CircuitLibrary {
     
     public static File folder;
     public static File jrubyJar;
+    public static File jrubyHome;
+    public static File jrubyGem;
     
     Plugin spout;
     
@@ -49,7 +51,11 @@ public class RubycLibrary extends CircuitLibrary {
     public void onLoad() {
         if (!getDataFolder().exists()) getDataFolder().mkdirs();
         folder = getDataFolder();
-        jrubyJar = new File(getDataFolder() + File.separator + "jruby.jar");
+        jrubyJar = new File(getDataFolder(), "jruby.jar");
+        jrubyHome = new File(getDataFolder(), "jruby");
+        jrubyGem = new File(RubycLibrary.jrubyHome, "gems");
+        if (!jrubyHome.exists()) jrubyHome.mkdirs();
+        if (!jrubyGem.exists()) jrubyGem.mkdirs();
         
         if (!registerJRubyJar(jrubyJar)) {
             getServer().getScheduler().scheduleAsyncDelayedTask(this, new JRubyDownloader());
@@ -76,7 +82,6 @@ public class RubycLibrary extends CircuitLibrary {
 
     @Override
     public void onDisable() {
-        log(Level.INFO, getName() + " " + getVersion() + " disabled.");
     }       
     
     private void registerCommand() {
