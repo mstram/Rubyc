@@ -15,7 +15,7 @@ import org.tal.rubychip.util.NullPrintStream;
  *
  * @author Tal Eisenberg
  */
-public class ScriptManager {
+public class RubyManager {
    
     
     public static RubycScript getScript(String name) throws IOException, IllegalArgumentException {        
@@ -49,7 +49,7 @@ public class ScriptManager {
     }
     
     public static List<String> getAvailableScripts() {
-        ScriptingContainer runtime = ScriptManager.createRuntime();
+        ScriptingContainer runtime = RubyManager.createRuntime();
         runtime.setError(new NullPrintStream());
         
         List<String> ret = new ArrayList<String>();

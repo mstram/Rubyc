@@ -3,7 +3,7 @@ package org.tal.rubychip.script;
 import java.util.Stack;
 
 /**
- *
+ * 
  * @author Tal Eisenberg
  */
 public class Script {
@@ -14,7 +14,7 @@ public class Script {
     
     protected Stack<EditCommand> undoStack = new Stack<EditCommand>();
     protected Stack<EditCommand> redoStack = new Stack<EditCommand>();
-    
+   
     public void setScript(String name, String script) {
         lines = script.split(System.getProperty("line.separator"));
         this.name = name;        

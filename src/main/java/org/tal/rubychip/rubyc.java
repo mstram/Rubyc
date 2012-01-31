@@ -45,7 +45,7 @@ public class rubyc extends Circuit {
         RubycScript script;
         
         try {
-            script = ScriptManager.getScript(args[0]);
+            script = RubyManager.getScript(args[0]);
         } catch (IllegalArgumentException e) {
             error(sender, e.getMessage());
             return false;
@@ -54,7 +54,7 @@ public class rubyc extends Circuit {
             return false;
         } 
         DebugWriter debugWriter = new DebugWriter();
-        runtime = ScriptManager.createRuntime();
+        runtime = RubyManager.createRuntime();
         runtime.setError(debugWriter);
         runtime.setOutput(debugWriter);
         if (initScript(sender, script)) {
@@ -139,7 +139,7 @@ public class rubyc extends Circuit {
     
     public void reloadScript(CommandSender sender) {
         this.resetOutputs();
-        runtime = ScriptManager.createRuntime();
+        runtime = RubyManager.createRuntime();
         args[0] = program.getScript().getName();
         RCarg.editSignArgs(this, args);
         if (initScript(sender, program.getScript()))
@@ -195,7 +195,7 @@ public class rubyc extends Circuit {
     }
 
     private void rubyException(CommandSender sender, String event, RaiseException e) {
-        if (sender==null && hasDebuggers()) {
+        if (sender==null && hasListeners()) {
             debug("on " + event + ": " + redstoneChips.getPrefs().getErrorColor() + e.getMessage());
             debug(ChatColor.AQUA + e.getException().backtrace().asString().asJavaString());
         } else {

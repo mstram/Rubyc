@@ -42,8 +42,8 @@ public class RubycCommand implements CommandExecutor {
                 return true;
             } else if (args[0].equalsIgnoreCase("gem")) {
                 if (args.length>1)
-                    ScriptManager.installGem(args[1]);
-                else ScriptManager.listGems();
+                    RubyManager.installGem(args[1]);
+                else RubyManager.listGems();
                 
                 return true;
             }
@@ -234,7 +234,7 @@ public class RubycCommand implements CommandExecutor {
     }
     
     private void listScripts(CommandSender sender) {
-        List<String> list = ScriptManager.getAvailableScripts();
+        List<String> list = RubyManager.getAvailableScripts();
         if (list.isEmpty()) {
             sender.sendMessage(rc.getPrefs().getInfoColor() + "There are no scripts yet.");
         } else {

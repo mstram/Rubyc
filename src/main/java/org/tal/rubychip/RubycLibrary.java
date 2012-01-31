@@ -10,8 +10,6 @@ import java.net.URLClassLoader;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.util.logging.Level;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event.Type;
 import org.bukkit.plugin.Plugin;
 import org.tal.redstonechips.RedstoneChips;
 import org.tal.redstonechips.circuit.CircuitLibrary;
@@ -65,7 +63,7 @@ public class RubycLibrary extends CircuitLibrary {
     @Override
     public void onEnable() {
         if (jrubyJar==null || !jrubyJar.exists()) { 
-            log(Level.SEVERE, "Can't find jruby.jar in plugin folder.");
+            getLogger().log(Level.SEVERE, "Can't find jruby.jar in plugin folder.");
             disable(); 
         } else {
             registerCommand();
@@ -73,10 +71,9 @@ public class RubycLibrary extends CircuitLibrary {
             RubycServerListener listener = new RubycServerListener(this);
             
             this.findSpout();
-            this.getServer().getPluginManager().registerEvent(Type.PLUGIN_ENABLE, listener, Priority.Monitor, this);
-            this.getServer().getPluginManager().registerEvent(Type.PLUGIN_DISABLE, listener, Priority.Monitor, this);
+            this.getServer().getPluginManager().registerEvents(listener, this);
             
-            log(Level.INFO, getName() + " " + getVersion() + " enabled." + (spout!=null?" Spout support enabled.":""));
+            getLogger().log(Level.INFO, getName() + " " + getVersion() + " enabled." + (spout!=null?" Spout support enabled.":""));
         }
     }
 
@@ -93,7 +90,7 @@ public class RubycLibrary extends CircuitLibrary {
         try {
             // sanity checks
             if (!jrubyFile.exists()) {
-                log(Level.SEVERE, getPrefix() + "JRuby runtime not found: " + jrubyFile.getPath());
+                getLogger().log(Level.SEVERE, getPrefix() + "JRuby runtime not found: " + jrubyFile.getPath());
                 return false;
             }              
             
@@ -103,7 +100,7 @@ public class RubycLibrary extends CircuitLibrary {
             URL[] urls = syscl.getURLs();
             for (URL url : urls)
                 if (url.sameFile(jrubyURL)) {
-                    log(Level.INFO, "Using present JRuby.jar from the classpath.");
+                    getLogger().log(Level.INFO, "Using present JRuby.jar from the classpath.");
                     jrubyLoaded = true;
                     return true;
                 }
@@ -115,18 +112,14 @@ public class RubycLibrary extends CircuitLibrary {
             // add jruby.jar to Bukkit's class path
             addURL.invoke(syscl, new Object[]{ jrubyURL });
             
-            log(Level.INFO, "Loading JRuby runtime " + jrubyFile.getPath() + "...");
+            getLogger().log(Level.INFO, "Loading JRuby runtime " + jrubyFile.getPath() + "...");
             jrubyLoaded = true;
             return true;            
         } catch (Exception e) {
-            log(Level.SEVERE, e.getMessage() + " while adding JRuby.jar to the classpath");
+            getLogger().log(Level.SEVERE, e.getMessage() + " while adding JRuby.jar to the classpath");
             e.printStackTrace();
             return false;
         }
-    }
-    
-    public void log(Level l, String m) {
-        logger.log(l, getPrefix() + m);
     }
     
     private void disable() {
@@ -156,12 +149,12 @@ public class RubycLibrary extends CircuitLibrary {
         @Override
         public void run() {
             URL url = null;
-            log(Level.INFO, "Downloading jruby 1.6.5.1...");
+            getLogger().log(Level.INFO, "Downloading jruby 1.6.5.1...");
             
             try {
                 url = new URL(jrubyAddress);
             } catch (MalformedURLException ex) {
-                log(Level.SEVERE, ex.getMessage());
+                getLogger().log(Level.SEVERE, ex.getMessage());
                 return;
             }
 
@@ -171,13 +164,13 @@ public class RubycLibrary extends CircuitLibrary {
                 FileOutputStream fos = new FileOutputStream(f);
                 fos.getChannel().transferFrom(rbc, 0, 1 << 24);
                 
-                log(Level.INFO, "Finished downloading jruby. Enabling rubyc.");
+                getLogger().log(Level.INFO, "Finished downloading jruby. Enabling rubyc.");
                 if (isEnabled()) disable();
                 
                 if (registerJRubyJar(jrubyJar)) 
                     enable();
             } catch (IOException ex) {
-                log(Level.SEVERE, "While downloading jruby.jar, " + ex);
+                getLogger().log(Level.SEVERE, "While downloading jruby.jar, " + ex);
             }
         }
         
